@@ -65,6 +65,13 @@ form.addEventListener("submit", async (event) => {
   setLoading(submit, true, "Signing in");
   try {
     await login(address, secret);
+    // Owe the app one title card. It is consumed on arrival and never
+    // re-issued, because a title card that repeats is an annoyance.
+    try {
+      window.sessionStorage.setItem("meridian.breath", "1");
+    } catch {
+      /* Private browsing can refuse storage. The app simply opens without it. */
+    }
     window.location.replace("/app");
   } catch (err) {
     setLoading(submit, false, "Sign in");

@@ -62,6 +62,21 @@
   color: var(--text-3);
 }
 
+/* ONE BREATH ON SIGN-IN.
+   The wordmark alone on --bg-000 for 700ms, then the rail's contents and the
+   canvas draw in. This adds no element and moves nothing: the wordmark already
+   sits at the top of the rail, and the title card is made entirely of the other
+   things being absent. Once per session — the flag lives in sessionStorage and
+   is consumed on arrival. Under reduced motion the 700ms hold survives and only
+   the fade is dropped, because the rhythm is the design. */
+.shell--breath { background: var(--bg-000); }
+
+.shell--breath .rail__group,
+.shell--breath .rail__foot,
+.shell--breath > .canvas {
+  animation: fig-in var(--t-panel) var(--e-out) 700ms both;
+}
+
 /* --- canvas --- */
 
 .canvas {
@@ -195,7 +210,13 @@
    emptiness is the most expensive material available and it costs nothing. */
 .band {
   display: grid;
-  grid-template-columns: minmax(0, 44fr) minmax(0, 56fr);
+  /* The hero column is sized by the figure, not by a fixed fraction. A deal
+     whose headline is `AED 2,200,000` needs more room than one reading
+     `AED 1,346/sqft`, and a fixed 44% made the long one collide with the
+     supporting metrics. `auto` gives the figure exactly what it asks for and
+     hands the remainder to the support grid, so the wider the hero the tighter
+     — but never broken — the composition. */
+  grid-template-columns: minmax(0, auto) minmax(0, 1fr);
   gap: var(--s-40) var(--s-80);
   align-items: start;
 }
@@ -291,7 +312,6 @@
 
 .u-start { text-align: start; }
 .u-end   { text-align: end; }
-.u-center { text-align: center; }
 
 .u-truncate {
   min-inline-size: 0;

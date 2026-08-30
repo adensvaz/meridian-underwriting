@@ -196,3 +196,35 @@ underwriting logic as data.
       `collect-admin.js`) are unversioned, so a stale module can survive a
       deploy while its entry point updates. Version them together or drop the
       scheme and rely on the `no-cache` header already set on HTML.
+
+## CSP defect — dynamic style writes are blocked product-wide
+
+- [ ] **`element.style.setProperty()` is blocked by `style-src 'self'` and every
+      dynamic style write in the product is silently failing.** Confirmed in the
+      browser on `/login` and `/styleguide`: dozens of "Applying inline style
+      violates ... style-src 'self'. The action has been blocked."
+
+      Impact is choreography, not layout — pages render correctly because all
+      structure lives in stylesheets. What dies is everything that passes a
+      computed value to CSS: the KPI count-up (`--target`), the stagger
+      (`--i`), the gauge needle rotation (`--deg`), the extraction sequence
+      timings (`--at`, `--from`). The motion design is dead and looks merely
+      "static" rather than broken, which is why it was reported clean.
+
+      **This is my error to correct, not the agents'.** The guidance I gave them
+      was "set CSS custom properties via `element.style.setProperty()`", which
+      is wrong under this policy.
+
+      Fix direction — verify before implementing: a constructed stylesheet
+      (`new CSSStyleSheet()` + `insertRule` + `document.adoptedStyleSheets`) is
+      not an inline style and should be permitted. Route every dynamic value
+      through one adopted sheet keyed by a generated class, rather than writing
+      to an element's style attribute. **Do not "fix" this by adding
+      `'unsafe-inline'` to `style-src`** — that reopens the exact injection
+      surface the policy exists to close, on a product holding confidential deal
+      data, to buy an animation.
+- [ ] **`npm run arch` should catch this class of defect.** It already forbids
+      `eval` and raw SQL in routes; add a rule flagging `.style.setProperty(` and
+      `.style.` assignment in `public/**`, pointing at the adopted-stylesheet
+      helper once it exists. A gate that cannot see a product-wide silent
+      failure is not yet doing its job.

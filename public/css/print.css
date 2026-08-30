@@ -31,8 +31,8 @@
     --text-1: #000000; --text-2: #333B42; --text-3: #5F6771; --text-4: #8B9299;
 
     --accent: #1F5678; --accent-bright: #1F5678; --accent-tint: transparent;
-    --pos: #14624A; --cau: #6E4F0A; --neg: #8C3125; --neu: #444C55;
-    --pos-tint: transparent; --cau-tint: transparent;
+    --cau: #6E4F0A; --neg: #8C3125; --neu: #444C55;
+    --cau-tint: transparent;
     --neg-tint: transparent; --neu-tint: transparent;
 
     --band-1: rgba(0, 0, 0, .10);

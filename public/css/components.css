@@ -98,6 +98,13 @@
 
 .kpi__val { position: relative; display: inline-block; }
 
+/* Not every headline value is a number. `Deposit — the loan-to-value ceiling`
+   is a sentence, and `nowrap` on the figure was clipping it mid-word against
+   the tile's overflow. Formatted figures contain no internal spaces, so
+   allowing a normal word wrap here lets prose breathe and leaves
+   `1,050,000` intact. */
+.kpi:not(.kpi--hero) .kpi__val { white-space: normal; }
+
 .kpi__sub {
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
@@ -116,10 +123,42 @@
   transform-origin: 0 50%;
 }
 
-.kpi--in::after,
-.kpi--draw::after { animation: rule-draw 420ms var(--e-out) calc(var(--i, 0) * 60ms) both; }
-
 [dir="rtl"] .kpi::after { transform-origin: 100% 50%; }
+
+/* THE REVEAL, RE-CUT.
+   Was: everything staggered 60ms left to right, on every render. Position is
+   not meaning, and a sequence that replays on every tab visit is latency
+   theatre — `DESIGN.md` §4 says no animation ever plays a second time, and this
+   one did. Now it plays once, on a fresh run only, ordered by what matters:
+
+     0-400ms    nothing. An empty canvas for four-tenths of a second is
+                uncomfortable to ship and is exactly why it lands — confidence
+                is legible as a willingness to wait.
+     400ms      the dominant figure, alone.
+     700ms      its baseline rule draws. The figure has had the frame to itself
+                for 300ms.
+     900ms+     everything else, at 50ms intervals.
+
+   Opacity only. Nothing travels, nothing settles, nothing moves after it
+   lands. Under reduced motion the durations collapse to 1ms but the delays do
+   not, so the beats survive and only the movement goes. */
+@keyframes fig-in { from { opacity: 0; } to { opacity: 1; } }
+
+.band--reveal > .kpi--hero {
+  animation: fig-in var(--t-reveal) var(--e-out) 400ms both;
+}
+
+.band--reveal > .kpi--hero::after {
+  animation: rule-draw 420ms var(--e-out) 700ms both;
+}
+
+.band--reveal .band__support > .kpi {
+  animation: fig-in var(--t-reveal) var(--e-out) calc(850ms + var(--i, 0) * 50ms) both;
+}
+
+.band--reveal .band__support > .kpi::after {
+  animation: rule-draw 420ms var(--e-out) calc(850ms + var(--i, 0) * 50ms) both;
+}
 
 /* Every supporting figure drops a step in weight. If two things shout,
    neither is heard. */
@@ -129,16 +168,55 @@
    heavy past 100px, and tighter tracking because large thin numerals drift
    apart without it. Sized against the panel rather than the viewport — the
    rail and the page padding are not the figure's business. */
-.kpi--hero { padding-block-end: var(--s-16); }
+.kpi--hero { padding-block-end: var(--s-16); overflow: visible; }
 
+/* The light pool. Not decoration — a source. It bleeds past the figure on
+   three sides so the falloff happens outside the type, and it is the only
+   gradient in the product. `overflow: visible` above is what lets it bleed;
+   the hero's size is governed by a clamp, so there is nothing left to clip. */
+.kpi--hero::before {
+  content: "";
+  position: absolute;
+  inset-block: calc(var(--s-40) * -1) calc(var(--s-24) * -1);
+  inset-inline: calc(var(--s-32) * -1) calc(var(--s-56) * -1);
+  background: radial-gradient(120% 80% at 20% 0%, var(--hero-pool), transparent 60%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* 7cqi, not 9. The figure is between 4.5em and 6.3em wide depending on how many
+   digits the deal has, and the fluid term has to be set so the widest of those
+   still leaves the supporting column usable. Measured: `AED 2,200,000` is
+   5.21em, `AED 1,346/sqft` is 5.6em, a purchase price in the tens of millions
+   about 6.3em. A hero that collides with its own supporting metrics is not a
+   hero, and one that gets clipped is worse. */
 .kpi--hero .kpi__figure {
-  font-size: clamp(64px, 9cqi, 132px);
+  font-size: clamp(56px, 7cqi, 120px);
   line-height: 1;
   font-weight: 200;
   letter-spacing: -0.045em;
 }
 
 .kpi--hero::after { background: var(--text-3); }
+
+/* At the hero size the annotations were shouting alongside the figure: `AED`
+   set at 0.42em of 70px is 29px, which is larger than most of the supporting
+   values on the screen. The currency is an annotation, not part of the number.
+   Drop it to 0.28em and seat it on the cap line; do the same for the unit, and
+   halve the decimal. The integer carries the meaning. */
+/* The prefix is nested inside `.kpi__val`, not a flex child of the figure, so
+   alignment has to be a translate. Seating its cap on the figure's cap line:
+   cap height is ~0.72em, so the prefix baseline lifts by
+   (0.72 - 0.72 x 0.28) x 1em of the figure = 0.52em, which is 1.85em of the
+   prefix's own size. */
+.kpi--hero .cur {
+  font-size: 0.28em;
+  transform: translateY(-1.85em);
+  margin-inline-end: 0.42em;
+}
+
+.kpi--hero .unit { font-size: 0.28em; margin-inline-start: 0.34em; }
+.kpi--hero .dec { font-size: 0.5em; }
 
 /* Below ~420px of panel the hero figure would clip. Demote rather than let a
    number wrap or get cut. */
@@ -186,7 +264,13 @@
   inset-block-start: 0;
   inset-inline-start: 0;
   animation: count var(--t-count) cubic-bezier(.2, .8, .2, 1) both;
-  animation-delay: calc(var(--i, 0) * 60ms);
+  /* Each figure counts from the moment it arrives, not from a position in a
+     left-to-right queue. */
+  animation-delay: 400ms;
+}
+
+.band--reveal .band__support > .kpi--in .kpi__val::after {
+  animation-delay: calc(850ms + var(--i, 0) * 50ms);
 }
 
 @keyframes count {
@@ -554,11 +638,37 @@
    5. AI NARRATIVE BLOCK
    -------------------------------------------------------------------------- */
 
+/* V. THE VERDICT LINE.
+   One sentence, treated like a title card: alone, at display-l but weight 200,
+   measure capped at 34ch so it never becomes a paragraph, 56px of nothing above
+   and below it, and a full-bleed hairline underneath. It is the sentence a
+   principal will actually read and until now it was styled exactly like the
+   body copy beneath it. */
+.verdict {
+  margin-inline: calc(var(--page-px) * -1);
+  padding-inline: var(--page-px);
+  padding-block: var(--s-56);
+  margin-block-end: var(--s-40);
+  border-block-end: 1px solid var(--hairline);
+}
+
+.verdict__line {
+  font-family: var(--font-display);
+  font-size: var(--fs-display-l);
+  line-height: var(--lh-display-l);
+  font-weight: 200;
+  letter-spacing: var(--ls-display-l);
+  color: var(--text-1);
+  max-inline-size: 34ch;
+  text-wrap: balance;
+}
+
+/* No accent bar. The rule down the inline-start was a 3px chromatic flourish
+   marking prose as machine-written — but `DESIGN.md` reserves the accent for
+   focus and interaction, and `.narrative__prov` already states the provenance
+   in words directly underneath. Colour was doing a caption's job. */
 .narrative {
   max-inline-size: 68ch;
-  border-inline-start: 3px solid var(--accent);
-  padding-inline-start: var(--s-20);
-  padding-block: var(--s-4);
 }
 
 .narrative p {
@@ -609,7 +719,7 @@
   transform-origin: 50% 0;
 }
 
-.flag--strength::before { background: var(--pos); }
+.flag--strength::before { background: var(--pos-line); }
 .flag--dd::before       { background: var(--neu); }
 .flag--caution::before  { background: var(--cau); }
 
@@ -989,7 +1099,7 @@ textarea.input { block-size: auto; min-block-size: 84px; padding-block: var(--s-
 .gauge__tick  { stroke: var(--hairline); stroke-width: 1; }
 .gauge__tick--major { stroke: var(--text-4); }
 .gauge__band  { fill: none; stroke: var(--neg); stroke-width: 3; stroke-linecap: butt; }
-.gauge__band--pos { stroke: var(--pos); }
+.gauge__band--pos { stroke: var(--pos-line); }
 .gauge__hub   { fill: var(--text-2); }
 
 .gauge__needle {
@@ -1053,7 +1163,8 @@ textarea.input { block-size: auto; min-block-size: 84px; padding-block: var(--s-
 
 .pill__dot { inline-size: 4px; block-size: 4px; border-radius: var(--r-pill); background: currentColor; flex: none; }
 
-.pill--pos { color: var(--pos); border-color: color-mix(in oklab, var(--pos) 34%, transparent); background: var(--pos-tint); }
+/* A healthy status does not announce itself. It sits there. */
+.pill--pos { color: var(--text-2); border-color: var(--hairline-strong); background: transparent; }
 .pill--cau { color: var(--cau); border-color: color-mix(in oklab, var(--cau) 34%, transparent); background: var(--cau-tint); }
 .pill--neg { color: var(--neg); border-color: color-mix(in oklab, var(--neg) 34%, transparent); background: var(--neg-tint); }
 .pill--neu { color: var(--neu); border-color: color-mix(in oklab, var(--neu) 34%, transparent); background: var(--neu-tint); }

@@ -25,13 +25,26 @@
 }
 
 .collect__plate--state {
-  text-align: center;
   padding-block: var(--s-56);
 }
 
+/* The firm that sent the link, and the first thing on the page. The buyer is
+   looking at their broker's brand before they are looking at a form, so this
+   gets the one moment of ornament the system budgets for — the engraved
+   wordmark — rather than being the quietest thing here. Until now it carried
+   `class="label"`, which does not exist in this system (the token is
+   `t-label`), so it rendered as unstyled 14px body copy. */
 .collect__eyebrow {
+  font-family: var(--font-display);
+  letter-spacing: .20em;
   color: var(--text-2);
-  margin: 0 0 var(--s-12);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, .05);
+  margin: 0 0 var(--s-16);
+}
+
+:root[data-theme="light"] .collect__eyebrow { text-shadow: 0 1px 0 rgba(255, 255, 255, .9); }
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) .collect__eyebrow { text-shadow: 0 1px 0 rgba(255, 255, 255, .9); }
 }
 
 .collect__title {
@@ -54,13 +67,15 @@
   max-inline-size: 52ch;
 }
 
+/* A note from the broker is a note, not an alert. It had an accent rule and an
+   accent fill, which made the one chromatic thing on the buyer's screen a
+   piece of ordinary prose — and left nothing for the error state to say. A
+   hairline and the page's own ground are enough. */
 .collect__note {
-  border-inline-start: 2px solid var(--accent);
-  background: var(--accent-tint);
-  padding: var(--s-12) var(--s-16);
-  border-radius: var(--r-sm);
-  font-size: 14px;
-  line-height: 1.55;
+  border-inline-start: 2px solid var(--hairline-strong);
+  padding-inline-start: var(--s-16);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
   color: var(--text-1);
   margin-block-end: var(--s-24);
 }
@@ -84,7 +99,6 @@
    is LEFT, so done items get quieter, not louder. */
 .checklist__item[data-state="done"] .checklist__label { color: var(--text-2); }
 .checklist__item[data-state="done"] .checklist__hint { display: none; }
-.checklist__item[data-state="done"] { background: linear-gradient(90deg, var(--pos-tint), transparent 40%); }
 
 .checklist__head {
   display: flex;
@@ -100,25 +114,26 @@
 }
 
 .checklist__optional {
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.08em;
+  font-size: var(--fs-label);
+  line-height: var(--lh-label);
+  font-weight: var(--fw-label);
+  letter-spacing: var(--ls-label);
   text-transform: uppercase;
   color: var(--text-3);
   border: 1px solid var(--hairline-strong);
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   padding: 2px 8px;
 }
 
 .checklist__tick {
   display: inline-flex;
-  color: var(--pos);
+  color: var(--text-2);
   margin-inline-start: auto;
 }
 
 .checklist__hint {
-  font-size: 13px;
-  line-height: 1.55;
+  font-size: var(--fs-dense);
+  line-height: var(--lh-body);
   color: var(--text-3);
   margin: 0 0 var(--s-12);
   max-inline-size: 48ch;
@@ -161,19 +176,19 @@
 }
 
 .checklist__status {
-  font-size: 12px;
-  line-height: 1.5;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-body);
   color: var(--text-3);
   margin: var(--s-8) 0 0;
   word-break: break-word;
 }
 
-.checklist__item[data-state="done"] .checklist__status { color: var(--pos); }
+.checklist__item[data-state="done"] .checklist__status { color: var(--text-2); }
 .checklist__item[data-state="error"] .checklist__status { color: var(--neg); }
 
 .checklist__warn {
-  font-size: 12px;
-  line-height: 1.5;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-body);
   color: var(--cau);
   margin: var(--s-8) 0 0;
   border-inline-start: 2px solid var(--cau);

@@ -5,18 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>DATUM — Meridian design system</title>
 <meta name="description" content="Static style guide for DATUM, the Meridian design language.">
-<link rel="stylesheet" href="css/tokens.css?v=4">
-<link rel="stylesheet" href="css/layout.css?v=4">
-<link rel="stylesheet" href="css/components.css?v=4">
-<link rel="stylesheet" href="css/extraction.css?v=4">
-<link rel="stylesheet" href="css/print.css?v=4">
+<link rel="stylesheet" href="css/tokens.css?v=16">
+<link rel="stylesheet" href="css/layout.css?v=16">
+<link rel="stylesheet" href="css/components.css?v=16">
+<link rel="stylesheet" href="css/extraction.css?v=16">
+<link rel="stylesheet" href="css/print.css?v=16">
 </head>
 <body class="sg-body">
 
 <!-- ======================================================================
      Shared inline-SVG definitions. Hand-written, 1px stroke, currentColor.
      ====================================================================== -->
-<svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
+<svg width="0" height="0" aria-hidden="true" focusable="false" class="sg-1">
   <defs>
     <!-- semicircular gauge ticks, every 5°, majors at 180/225/270/315/360 -->
     <g id="dg-ticks" fill="none" stroke="currentColor" stroke-width="1">
@@ -98,7 +98,7 @@
       <span class="t-micro section__note">Signal, never decoration</span>
     </div>
 
-    <p class="t-caption c-3" style="max-inline-size:68ch;margin-block-end:var(--s-16)">
+    <p class="t-caption c-3 sg-2" >
       Semantics sit at 40–50% saturation and are hue-shifted off the primaries, so a
       table containing all four reads as a system rather than a traffic light. One step
       of background lightness is the only elevation cue that survives on black.
@@ -185,41 +185,41 @@
       </div>
     </div>
 
-    <div class="sg-cols sg-cols--wide" style="margin-block-start:var(--s-16)">
+    <div class="sg-cols sg-cols--wide sg-3" >
       <div class="sg-specimen">
         <div class="sg-caption t-label">Currency is a prefix</div>
-        <div class="t-display-m" style="font-family:var(--font-display)"><span class="cur">AED</span>12,480,000</div>
-        <div class="t-display-m" style="font-family:var(--font-display);margin-block-start:var(--s-12)"><span class="cur">AED</span>12.48<span class="mag">m</span></div>
-        <p class="t-caption c-3" style="margin-block-start:var(--s-12)">Never <span class="t-mono">12,480,000 AED</span> in English UI. Never <span class="t-mono">$</span>.</p>
+        <div class="t-display-m sg-4" ><span class="cur">AED</span>12,480,000</div>
+        <div class="t-display-m sg-5" ><span class="cur">AED</span>12.48<span class="mag">m</span></div>
+        <p class="t-caption c-3 sg-6" >Never <span class="t-mono">12,480,000 AED</span> in English UI. Never <span class="t-mono">$</span>.</p>
       </div>
       <div class="sg-specimen">
         <div class="sg-caption t-label">Decimals are a footnote</div>
-        <div class="t-display-m" style="font-family:var(--font-display)">7<span class="dec">.43</span><span class="unit">% gross</span></div>
-        <div class="t-display-m" style="font-family:var(--font-display);margin-block-start:var(--s-12)">1<span class="dec">.32</span><span class="unit">× DSCR</span></div>
-        <p class="t-caption c-3" style="margin-block-start:var(--s-12)">The integer carries the meaning. No number is rendered without its unit.</p>
+        <div class="t-display-m sg-4" >7<span class="dec">.43</span><span class="unit">% gross</span></div>
+        <div class="t-display-m sg-5" >1<span class="dec">.32</span><span class="unit">× DSCR</span></div>
+        <p class="t-caption c-3 sg-6" >The integer carries the meaning. No number is rendered without its unit.</p>
       </div>
       <div class="sg-specimen">
         <div class="sg-caption t-label">Accounting parentheses</div>
-        <div class="t-display-m num neg-fig" style="font-family:var(--font-display);text-align:start">(1,240,500)</div>
-        <div class="t-display-m num" style="font-family:var(--font-display);text-align:start;margin-block-start:var(--s-12)">(238,100)</div>
-        <p class="t-caption c-3" style="margin-block-start:var(--s-12)">Coloured only when the sign carries judgement. An expense line is not a failure.</p>
+        <div class="t-display-m num neg-fig sg-7" >(1,240,500)</div>
+        <div class="t-display-m num sg-8" >(238,100)</div>
+        <p class="t-caption c-3 sg-6" >Coloured only when the sign carries judgement. An expense line is not a failure.</p>
       </div>
       <div class="sg-specimen">
         <div class="sg-caption t-label">Areas — sq ft primary</div>
-        <div class="t-display-m" style="font-family:var(--font-display)">9,272<span class="unit">sq ft</span><span class="sqm t-caption">862 sq m</span></div>
-        <p class="t-caption c-3" style="margin-block-start:var(--s-12)">Every rent roll here mixes them; getting it right is worth more than any flourish.</p>
+        <div class="t-display-m sg-4" >9,272<span class="unit">sq ft</span><span class="sqm t-caption">862 sq m</span></div>
+        <p class="t-caption c-3 sg-6" >Every rent roll here mixes them; getting it right is worth more than any flourish.</p>
       </div>
       <div class="sg-specimen">
         <div class="sg-caption t-label">The one moment of ornament</div>
-        <div style="padding-block:var(--s-16)"><span class="wordmark" style="font-size:22px">Meridian</span></div>
+        <div class="sg-9"><span class="wordmark sg-10" >Meridian</span></div>
         <p class="t-caption c-3">Engraved wordmark, <span class="t-mono">text-2</span> with a 1px light text-shadow. That is the whole budget.</p>
       </div>
       <div class="sg-specimen" lang="ar" dir="rtl">
         <div class="sg-caption t-label" lang="en" dir="ltr">RTL readiness</div>
         <div class="t-title">ميريديان — تحليل الصفقات العقارية</div>
-        <p class="t-body c-2" style="margin-block-start:var(--s-8)">صافي الدخل التشغيلي</p>
-        <div class="t-display-m num" style="font-family:var(--font-display);margin-block-start:var(--s-8)" dir="ltr"><span class="cur">AED</span>688,900</div>
-        <p class="t-caption c-3" style="margin-block-start:var(--s-8)">(1,240,500)</p>
+        <p class="t-body c-2 sg-11" >صافي الدخل التشغيلي</p>
+        <div class="t-display-m num sg-12"  dir="ltr"><span class="cur">AED</span>688,900</div>
+        <p class="t-caption c-3 sg-11" >(1,240,500)</p>
       </div>
     </div>
   </section>
@@ -233,8 +233,8 @@
       <span class="t-micro section__note">220px rail · fluid canvas · 360px inspector</span>
     </div>
 
-    <div class="sg-specimen sg-specimen--flush" style="block-size:420px;overflow:hidden">
-      <div class="shell" style="block-size:420px;grid-template-rows:420px">
+    <div class="sg-specimen sg-specimen--flush sg-13" >
+      <div class="shell sg-14" >
         <aside class="rail">
           <div class="rail__brand"><span class="wordmark">Meridian</span></div>
           <div class="rail__group">
@@ -263,7 +263,7 @@
         </aside>
 
         <div class="canvas">
-          <div class="page" style="padding-block:var(--s-24) var(--s-24)">
+          <div class="page sg-15" >
             <div class="page-head">
               <div class="page-head__id">
                 <span class="t-label c-3">Deal MER-2026-0114</span>
@@ -288,8 +288,8 @@
         </div>
 
         <aside class="inspector">
-          <div style="padding:var(--s-16)">
-            <div class="t-label c-3" style="margin-block-end:var(--s-12)">Inspector</div>
+          <div class="sg-16">
+            <div class="t-label c-3 sg-17" >Inspector</div>
             <div class="stack stack--12">
               <div class="dpair"><span class="dpair__k">Submarket</span><span class="dpair__v">JVC</span></div>
               <div class="rule"></div>
@@ -315,7 +315,7 @@
     </div>
 
     <div class="band" id="kpi-band">
-      <div class="kpi kpi--hero" style="--i:0;--target:12480000">
+      <div class="kpi kpi--hero sg-18" >
         <span class="kpi__label">Purchase price</span>
         <div class="kpi__figure"><span class="cur">AED</span><span class="kpi__val"><span class="kpi__fmt">12,480,000</span></span></div>
         <span class="kpi__sub">AED 1,346 / sq ft · 9,272 sq ft <span class="sqm">862 sq m</span></span>
@@ -326,7 +326,7 @@
       </div>
 
       <div class="band__support">
-      <div class="kpi" style="--i:1;--target:688900">
+      <div class="kpi sg-19" >
         <span class="kpi__label">Net operating income</span>
         <div class="kpi__figure"><span class="cur">AED</span><span class="kpi__val"><span class="kpi__fmt">688,900</span></span></div>
         <span class="kpi__sub">Year 1, stabilised</span>
@@ -336,7 +336,7 @@
         </span>
       </div>
 
-      <div class="kpi" style="--i:2;--target:743">
+      <div class="kpi sg-20" >
         <span class="kpi__label">Gross yield</span>
         <div class="kpi__figure"><span class="kpi__val"><span class="kpi__fmt">7<span class="dec">.43</span></span></span><span class="unit">%</span></div>
         <span class="kpi__sub">On effective gross income</span>
@@ -346,7 +346,7 @@
         </span>
       </div>
 
-      <div class="kpi" style="--i:3;--target:552">
+      <div class="kpi sg-21" >
         <span class="kpi__label">Net yield</span>
         <div class="kpi__figure"><span class="kpi__val"><span class="kpi__fmt">5<span class="dec">.52</span></span></span><span class="unit">%</span></div>
         <span class="kpi__sub">After AED 238,100 opex</span>
@@ -356,7 +356,7 @@
         </span>
       </div>
 
-      <div class="kpi" style="--i:4;--target:132">
+      <div class="kpi sg-22" >
         <span class="kpi__label">DSCR</span>
         <div class="kpi__figure"><span class="kpi__val"><span class="kpi__fmt">1<span class="dec">.32</span></span></span><span class="unit">×</span></div>
         <span class="kpi__sub">Covenant 1.20× · 60% LTV</span>
@@ -366,7 +366,7 @@
         </span>
       </div>
 
-      <div class="kpi" style="--i:5;--target:318">
+      <div class="kpi sg-23" >
         <span class="kpi__label">Cash-on-cash</span>
         <div class="kpi__figure"><span class="kpi__val"><span class="kpi__fmt">3<span class="dec">.18</span></span></span><span class="unit">%</span></div>
         <span class="kpi__sub">On AED 5,241,600 equity</span>
@@ -376,7 +376,7 @@
         </span>
       </div>
 
-      <div class="kpi" style="--i:6;--target:1420">
+      <div class="kpi sg-24" >
         <span class="kpi__label">IRR · 5 year levered</span>
         <div class="kpi__figure"><span class="kpi__val"><span class="kpi__fmt">14<span class="dec">.20</span></span></span><span class="unit">%</span></div>
         <span class="kpi__sub">Exit at 6.25% yield</span>
@@ -388,7 +388,7 @@
       </div>
     </div>
 
-    <div class="row row--12 row--wrap no-print" style="margin-block-start:var(--s-16)">
+    <div class="row row--12 row--wrap no-print sg-3" >
       <button class="btn btn--secondary btn--sm" type="button" id="replay-count">Replay count-up</button>
       <span class="t-caption c-3">
         <span class="t-mono">@property --n</span> + <span class="t-mono">counter()</span>, staggered 60ms.
@@ -412,7 +412,7 @@
         <div class="gauge-cell">
           <svg class="gauge" viewBox="0 0 96 52" role="img" aria-label="DSCR 1.32 times, covenant 1.20 times">
             <path class="gauge__arc" d="M 8 46 A 40 40 0 0 1 88 46"/>
-            <use class="gauge__ticks" href="#dg-ticks" style="color:var(--hairline-strong)"/>
+            <use class="gauge__ticks sg-25" href="#dg-ticks" />
             <path class="gauge__band" d="M 8 46 A 40 40 0 0 1 28 11.36"/>
             <line class="gauge__needle" data-deg="-12" x1="48" y1="46" x2="48" y2="12"/>
             <circle class="gauge__hub" cx="48" cy="46" r="2"/>
@@ -429,7 +429,7 @@
         <div class="gauge-cell">
           <svg class="gauge" viewBox="0 0 96 52" role="img" aria-label="Net yield 5.52 percent">
             <path class="gauge__arc" d="M 8 46 A 40 40 0 0 1 88 46"/>
-            <use class="gauge__ticks" href="#dg-ticks" style="color:var(--hairline-strong)"/>
+            <use class="gauge__ticks sg-25" href="#dg-ticks" />
             <path class="gauge__band" d="M 8 46 A 40 40 0 0 1 19.72 17.72"/>
             <line class="gauge__needle" data-deg="-14.4" x1="48" y1="46" x2="48" y2="12"/>
             <circle class="gauge__hub" cx="48" cy="46" r="2"/>
@@ -446,7 +446,7 @@
         <div class="gauge-cell">
           <svg class="gauge" viewBox="0 0 96 52" role="img" aria-label="Exit yield 6.25 percent">
             <path class="gauge__arc" d="M 8 46 A 40 40 0 0 1 88 46"/>
-            <use class="gauge__ticks" href="#dg-ticks" style="color:var(--hairline-strong)"/>
+            <use class="gauge__ticks sg-25" href="#dg-ticks" />
             <path class="gauge__band" d="M 71.51 13.64 A 40 40 0 0 1 88 46"/>
             <line class="gauge__needle" data-deg="-9" x1="48" y1="46" x2="48" y2="12"/>
             <circle class="gauge__hub" cx="48" cy="46" r="2"/>
@@ -459,7 +459,7 @@
       </div>
     </div>
 
-    <div class="row row--12 no-print" style="margin-block-start:var(--s-16)">
+    <div class="row row--12 no-print sg-3" >
       <button class="btn btn--secondary btn--sm" type="button" id="needle-stress">Stress the needles</button>
       <span class="t-caption c-3">A needle that bounces is a toy; a needle that arrives and stops is an instrument.</span>
     </div>
@@ -538,7 +538,7 @@
       </table>
     </div>
 
-    <p class="t-caption c-3" style="margin-block-start:var(--s-8)">
+    <p class="t-caption c-3 sg-11" >
       Contract rents are in AED per annum. Column min-widths are keyed to the widest
       plausible figure, so numbers never reflow when the data changes.
     </p>
@@ -553,7 +553,7 @@
       <span class="t-micro section__note">220px · 1fr · 88px · 28px</span>
     </div>
 
-    <div class="row row--12 row--wrap no-print" style="margin-block-end:var(--s-12)">
+    <div class="row row--12 row--wrap no-print sg-17" >
       <button class="btn btn--secondary btn--sm" type="button" id="commit-flash">Commit an edit</button>
       <span class="t-caption c-3">Hover a row to reveal its citation. Confidence is ink density, never a percentage in a pill.</span>
     </div>
@@ -561,8 +561,8 @@
     <div class="ledger">
       <div class="ledger__head">
         <span class="t-label field__label">Field</span>
-        <span class="t-label" style="text-align:end">Value</span>
-        <span class="t-label" style="text-align:end">Conf.</span>
+        <span class="t-label sg-26" >Value</span>
+        <span class="t-label sg-26" >Conf.</span>
         <span></span>
       </div>
 
@@ -639,18 +639,18 @@
       </div>
     </div>
 
-    <div class="sg-cols" style="margin-block-start:var(--s-16)">
+    <div class="sg-cols sg-3" >
       <div class="sg-specimen">
         <div class="sg-caption t-label">High — solid underline, three bars</div>
-        <div class="row row--12"><span class="t-mono t-dense" style="text-decoration:underline solid var(--hairline-strong);text-underline-offset:5px">12,480,000</span><span class="conf" style="gap:2px"><i class="conf__bar" style="background:var(--text-2)"></i><i class="conf__bar" style="background:var(--text-2)"></i><i class="conf__bar" style="background:var(--text-2)"></i></span></div>
+        <div class="row row--12"><span class="t-mono t-dense sg-27" >12,480,000</span><span class="conf sg-28" ><i class="conf__bar sg-29" ></i><i class="conf__bar sg-29" ></i><i class="conf__bar sg-29" ></i></span></div>
       </div>
       <div class="sg-specimen">
         <div class="sg-caption t-label">Medium — dashed underline, two bars</div>
-        <div class="row row--12"><span class="t-mono t-dense" style="text-decoration:underline dashed var(--cau);text-underline-offset:5px">912,000</span><span class="conf" style="gap:2px"><i class="conf__bar" style="background:var(--cau)"></i><i class="conf__bar" style="background:var(--cau)"></i><i class="conf__bar"></i></span></div>
+        <div class="row row--12"><span class="t-mono t-dense sg-30" >912,000</span><span class="conf sg-28" ><i class="conf__bar sg-31" ></i><i class="conf__bar sg-31" ></i><i class="conf__bar"></i></span></div>
       </div>
       <div class="sg-specimen">
         <div class="sg-caption t-label">Low — dotted underline, one bar, tinted cell</div>
-        <div class="row row--12"><span class="t-mono t-dense" style="text-decoration:underline dotted var(--cau);text-underline-offset:5px;background:var(--cau-tint);padding-inline:4px">6.80</span><span class="conf" style="gap:2px"><i class="conf__bar" style="background:var(--cau)"></i><i class="conf__bar"></i><i class="conf__bar"></i></span></div>
+        <div class="row row--12"><span class="t-mono t-dense sg-32" >6.80</span><span class="conf sg-28" ><i class="conf__bar sg-31" ></i><i class="conf__bar"></i><i class="conf__bar"></i></span></div>
       </div>
     </div>
   </section>
@@ -700,7 +700,7 @@
       <span class="t-micro section__note">A flag never pops — it scores the page</span>
     </div>
 
-    <div class="row row--12 no-print" style="margin-block-end:var(--s-16)">
+    <div class="row row--12 no-print sg-33" >
       <button class="btn btn--secondary btn--sm" type="button" id="replay-flags">Replay margin rules</button>
       <span class="t-caption c-3">2px rule draws <span class="t-mono">scaleY(0→1)</span> over 260ms; the title opens from −0.02em to 0.14em.</span>
     </div>
@@ -708,12 +708,12 @@
     <div class="sg-cols sg-cols--wide">
       <div class="sg-specimen">
         <div class="flag-stack" id="flagset-a">
-          <div class="flag flag--strength" style="--i:0">
+          <div class="flag flag--strength sg-34" >
             <div class="flag__title">Rent roll under market</div>
             <p class="flag__body">Eight of eleven let units sit below the JVC median for their type. Rolling the four 2025 expiries to market adds AED 21,400 of contracted rent without capital works.</p>
             <div class="flag__meta">RR sheet 1 · 208 comparables · confidence high</div>
           </div>
-          <div class="flag flag--strength" style="--i:1">
+          <div class="flag flag--strength sg-35" >
             <div class="flag__title">Freehold title, single owner</div>
             <p class="flag__body">Whole-building freehold in a JVC plot with no ground rent and no strata split, which removes the service-charge arbitration risk seen on the Business Bay comparables.</p>
             <div class="flag__meta">OM p.03 · title deed sighted</div>
@@ -723,12 +723,12 @@
 
       <div class="sg-specimen">
         <div class="flag-stack" id="flagset-b">
-          <div class="flag" style="--i:0">
+          <div class="flag sg-34" >
             <div class="flag__title">Cash-on-cash below mandate</div>
             <p class="flag__body">At 60% LTV and a 5.15% cost of debt the deal returns 3.18% cash-on-cash against a 4.00% floor. The gap closes only if unit 303 is let within two quarters.</p>
             <div class="flag__meta">Model MER-2026-0114 · sensitivity tab</div>
           </div>
-          <div class="flag flag--caution" style="--i:1">
+          <div class="flag flag--caution sg-35" >
             <div class="flag__title">Cheque concentration</div>
             <p class="flag__body">Four tenancies pay on one or two cheques. AED 187,000 of annual rent lands in a single collection window, which the vendor's T12 presents as smoothed monthly income.</p>
             <div class="flag__meta">RR sheet 1 · T12 p.02 · reconciled</div>
@@ -738,12 +738,12 @@
 
       <div class="sg-specimen">
         <div class="flag-stack" id="flagset-c">
-          <div class="flag flag--dd" style="--i:0">
+          <div class="flag flag--dd sg-34" >
             <div class="flag__title">Obtain Ejari for unit 303</div>
             <p class="flag__body">Unit 303 has no registration on file. Confirm whether the unit was ever let, and obtain the ejectment or vacancy record covering 14/03/2025 to date.</p>
             <div class="flag__meta">Due diligence · owner · pre-exchange</div>
           </div>
-          <div class="flag flag--dd" style="--i:1">
+          <div class="flag flag--dd sg-35" >
             <div class="flag__title">Verify service-charge budget</div>
             <p class="flag__body">AED 12.50 per sq ft is quoted from the 2024 budget. Request the 2026 approved budget and the reserve-fund statement before the price is fixed.</p>
             <div class="flag__meta">Due diligence · OA management · 10 days</div>
@@ -803,11 +803,11 @@
       <div class="sg-specimen">
         <div class="sg-caption t-label">Focus (persistent, for review)</div>
         <div class="row row--8 row--wrap">
-          <button class="btn btn--primary" type="button" style="outline:1px solid var(--accent);outline-offset:2px">Focused primary</button>
-          <button class="btn btn--secondary" type="button" style="outline:1px solid var(--accent);outline-offset:2px">Focused secondary</button>
-          <button class="btn btn--ghost" type="button" style="outline:1px solid var(--accent);outline-offset:2px">Focused ghost</button>
+          <button class="btn btn--primary sg-36" type="button" >Focused primary</button>
+          <button class="btn btn--secondary sg-36" type="button" >Focused secondary</button>
+          <button class="btn btn--ghost sg-36" type="button" >Focused ghost</button>
         </div>
-        <p class="t-caption c-3" style="margin-block-start:var(--s-12)">Focus rings never animate.</p>
+        <p class="t-caption c-3 sg-6" >Focus rings never animate.</p>
       </div>
     </div>
   </section>
@@ -973,7 +973,7 @@
         </div>
       </div>
       <div class="sg-specimen sg-specimen--flush">
-        <div class="empty" style="border:0">
+        <div class="empty sg-37" >
           <span class="empty__title">No comparables in range</span>
           <p class="empty__body">No JVC transactions within 15% of AED 1,346 / sq ft closed in the last two quarters. Widen the radius to Dubai Sports City or extend the window to eight quarters.</p>
           <div class="empty__act row row--8">
@@ -1011,9 +1011,9 @@
       <span class="t-micro section__note">Hairline draws in on entry</span>
     </div>
 
-    <div class="sg-specimen" style="display:flex;justify-content:center;background:var(--bg-100)">
+    <div class="sg-specimen sg-38" >
       <div class="auth" id="auth-plate">
-        <div class="auth__mark"><span class="wordmark" style="font-size:18px">Meridian</span></div>
+        <div class="auth__mark"><span class="wordmark sg-39" >Meridian</span></div>
         <h3 class="t-title auth__title">Sign in</h3>
         <p class="t-caption auth__sub">Underwriting desk · Dubai</p>
         <div class="auth__fields">
@@ -1026,11 +1026,11 @@
             <input class="input" id="a2" type="password" placeholder="••••••••••••">
           </div>
         </div>
-        <button class="btn btn--primary btn--lg" type="button" style="inline-size:100%">Continue</button>
+        <button class="btn btn--primary btn--lg sg-40" type="button" >Continue</button>
         <div class="auth__foot t-micro">SSO available for family offices · DIFC</div>
       </div>
     </div>
-    <div class="row row--12 no-print" style="margin-block-start:var(--s-12)">
+    <div class="row row--12 no-print sg-6" >
       <button class="btn btn--secondary btn--sm" type="button" id="replay-auth">Replay draw-in</button>
     </div>
   </section>
@@ -1044,7 +1044,7 @@
       <span class="t-micro section__note">Floor 4200ms · scan 2400ms linear</span>
     </div>
 
-    <div class="row row--12 row--wrap no-print" style="margin-block-end:var(--s-16)">
+    <div class="row row--12 row--wrap no-print sg-33" >
       <button class="btn btn--primary btn--sm" type="button" id="run-extract">Run extraction</button>
       <span class="t-caption c-3">
         Plates rise → plate draws → scan travels at constant rate → values latch at 180ms intervals → plate dims, ledger enters.
@@ -1053,15 +1053,15 @@
 
     <div class="sg-specimen extract" id="extract">
       <div class="ex-plates">
-        <div class="fileplate" style="--i:0">
+        <div class="fileplate sg-34" >
           <svg viewBox="0 0 14 18" fill="none" stroke="currentColor" stroke-width="1"><path d="M1.5 .5h8l4 4v13h-12z"/><path d="M9.5 .5v4h4"/></svg>
           <span class="fileplate__name">Marisol_OM_2026.pdf</span><span class="fileplate__size">4.1 MB</span>
         </div>
-        <div class="fileplate" style="--i:1">
+        <div class="fileplate sg-35" >
           <svg viewBox="0 0 14 18" fill="none" stroke="currentColor" stroke-width="1"><path d="M1.5 .5h8l4 4v13h-12z"/><path d="M9.5 .5v4h4"/></svg>
           <span class="fileplate__name">Marisol_RentRoll.xlsx</span><span class="fileplate__size">96 KB</span>
         </div>
-        <div class="fileplate" style="--i:2">
+        <div class="fileplate sg-41" >
           <svg viewBox="0 0 14 18" fill="none" stroke="currentColor" stroke-width="1"><path d="M1.5 .5h8l4 4v13h-12z"/><path d="M9.5 .5v4h4"/></svg>
           <span class="fileplate__name">Marisol_T12_FY2025.xlsx</span><span class="fileplate__size">248 KB</span>
         </div>
@@ -1073,90 +1073,90 @@
       </div>
 
       <div class="stage-rail">
-        <div class="stage" style="--from:0ms;--dur:520ms"><span class="stage__label">Ingest</span><span class="stage__track"><i class="stage__fill"></i></span></div>
-        <div class="stage" style="--from:520ms;--dur:620ms"><span class="stage__label">Segment</span><span class="stage__track"><i class="stage__fill"></i></span></div>
-        <div class="stage" style="--from:1140ms;--dur:1660ms"><span class="stage__label">Read</span><span class="stage__track"><i class="stage__fill"></i></span></div>
-        <div class="stage" style="--from:2800ms;--dur:800ms"><span class="stage__label">Reconcile</span><span class="stage__track"><i class="stage__fill"></i></span></div>
-        <div class="stage" style="--from:3600ms;--dur:600ms"><span class="stage__label">Validate</span><span class="stage__track"><i class="stage__fill"></i></span></div>
+        <div class="stage sg-42" ><span class="stage__label">Ingest</span><span class="stage__track"><i class="stage__fill"></i></span></div>
+        <div class="stage sg-43" ><span class="stage__label">Segment</span><span class="stage__track"><i class="stage__fill"></i></span></div>
+        <div class="stage sg-44" ><span class="stage__label">Read</span><span class="stage__track"><i class="stage__fill"></i></span></div>
+        <div class="stage sg-45" ><span class="stage__label">Reconcile</span><span class="stage__track"><i class="stage__fill"></i></span></div>
+        <div class="stage sg-46" ><span class="stage__label">Validate</span><span class="stage__track"><i class="stage__fill"></i></span></div>
       </div>
 
       <div class="ex-split">
         <div class="pp-stage">
           <svg class="pp" viewBox="0 0 232 328" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
             <rect class="pp__frame" x="0.5" y="0.5" width="231" height="327" rx="1"/>
-            <line class="pp__rule" x1="18" y1="26" x2="128" y2="26" style="--at:830ms"/>
-            <line class="pp__rule" x1="18" y1="38" x2="86" y2="38" style="--at:918ms"/>
-            <line class="pp__line" x1="18" y1="58" x2="214" y2="58" style="--at:1064ms"/>
-            <line class="pp__line" x1="18" y1="67" x2="202" y2="67" style="--at:1130ms"/>
-            <line class="pp__line" x1="18" y1="76" x2="208" y2="76" style="--at:1196ms"/>
-            <line class="pp__line" x1="18" y1="85" x2="190" y2="85" style="--at:1262ms"/>
-            <line class="pp__line" x1="18" y1="94" x2="178" y2="94" style="--at:1328ms"/>
-            <line class="pp__line" x1="18" y1="103" x2="214" y2="103" style="--at:1394ms"/>
-            <line class="pp__line" x1="18" y1="112" x2="196" y2="112" style="--at:1460ms"/>
-            <line class="pp__line" x1="18" y1="121" x2="206" y2="121" style="--at:1525ms"/>
-            <line class="pp__line" x1="18" y1="130" x2="184" y2="130" style="--at:1591ms"/>
-            <line class="pp__line" x1="18" y1="139" x2="210" y2="139" style="--at:1657ms"/>
-            <line class="pp__line" x1="18" y1="148" x2="200" y2="148" style="--at:1723ms"/>
-            <line class="pp__line" x1="18" y1="157" x2="214" y2="157" style="--at:1789ms"/>
-            <line class="pp__line" x1="18" y1="166" x2="188" y2="166" style="--at:1855ms"/>
-            <line class="pp__line" x1="18" y1="175" x2="204" y2="175" style="--at:1920ms"/>
-            <line class="pp__line" x1="18" y1="184" x2="176" y2="184" style="--at:1986ms"/>
-            <line class="pp__line" x1="18" y1="193" x2="212" y2="193" style="--at:2052ms"/>
-            <line class="pp__line" x1="18" y1="202" x2="194" y2="202" style="--at:2118ms"/>
-            <line class="pp__line" x1="18" y1="211" x2="208" y2="211" style="--at:2184ms"/>
-            <line class="pp__line" x1="18" y1="220" x2="182" y2="220" style="--at:2250ms"/>
-            <line class="pp__line" x1="18" y1="229" x2="206" y2="229" style="--at:2316ms"/>
-            <line class="pp__line" x1="18" y1="238" x2="198" y2="238" style="--at:2381ms"/>
-            <line class="pp__line" x1="18" y1="247" x2="166" y2="247" style="--at:2447ms"/>
-            <line class="pp__rule" x1="18" y1="258" x2="214" y2="258" style="--at:2528ms"/>
-            <line class="pp__cell" x1="18" y1="266" x2="78" y2="266" style="--at:2586ms"/>
-            <line class="pp__cell" x1="88" y1="266" x2="124" y2="266" style="--at:2586ms"/>
-            <line class="pp__cell" x1="132" y1="266" x2="166" y2="266" style="--at:2586ms"/>
-            <line class="pp__cell" x1="176" y1="266" x2="214" y2="266" style="--at:2586ms"/>
-            <line class="pp__cell" x1="18" y1="275" x2="78" y2="275" style="--at:2652ms"/>
-            <line class="pp__cell" x1="88" y1="275" x2="124" y2="275" style="--at:2652ms"/>
-            <line class="pp__cell" x1="132" y1="275" x2="166" y2="275" style="--at:2652ms"/>
-            <line class="pp__cell" x1="176" y1="275" x2="214" y2="275" style="--at:2652ms"/>
-            <line class="pp__cell" x1="18" y1="284" x2="78" y2="284" style="--at:2718ms"/>
-            <line class="pp__cell" x1="88" y1="284" x2="124" y2="284" style="--at:2718ms"/>
-            <line class="pp__cell" x1="132" y1="284" x2="166" y2="284" style="--at:2718ms"/>
-            <line class="pp__cell" x1="176" y1="284" x2="214" y2="284" style="--at:2718ms"/>
-            <line class="pp__cell" x1="18" y1="293" x2="78" y2="293" style="--at:2784ms"/>
-            <line class="pp__cell" x1="88" y1="293" x2="124" y2="293" style="--at:2784ms"/>
-            <line class="pp__cell" x1="132" y1="293" x2="166" y2="293" style="--at:2784ms"/>
-            <line class="pp__cell" x1="176" y1="293" x2="214" y2="293" style="--at:2784ms"/>
-            <line class="pp__cell" x1="18" y1="302" x2="78" y2="302" style="--at:2850ms"/>
-            <line class="pp__cell" x1="88" y1="302" x2="124" y2="302" style="--at:2850ms"/>
-            <line class="pp__cell" x1="132" y1="302" x2="166" y2="302" style="--at:2850ms"/>
-            <line class="pp__cell" x1="176" y1="302" x2="214" y2="302" style="--at:2850ms"/>
-            <line class="pp__cell" x1="18" y1="311" x2="78" y2="311" style="--at:2916ms"/>
-            <line class="pp__cell" x1="88" y1="311" x2="124" y2="311" style="--at:2916ms"/>
-            <line class="pp__cell" x1="132" y1="311" x2="166" y2="311" style="--at:2916ms"/>
-            <line class="pp__cell" x1="176" y1="311" x2="214" y2="311" style="--at:2916ms"/>
-            <line class="pp__rule" x1="18" y1="320" x2="214" y2="320" style="--at:2981ms"/>
+            <line class="pp__rule sg-47" x1="18" y1="26" x2="128" y2="26" />
+            <line class="pp__rule sg-48" x1="18" y1="38" x2="86" y2="38" />
+            <line class="pp__line sg-49" x1="18" y1="58" x2="214" y2="58" />
+            <line class="pp__line sg-50" x1="18" y1="67" x2="202" y2="67" />
+            <line class="pp__line sg-51" x1="18" y1="76" x2="208" y2="76" />
+            <line class="pp__line sg-52" x1="18" y1="85" x2="190" y2="85" />
+            <line class="pp__line sg-53" x1="18" y1="94" x2="178" y2="94" />
+            <line class="pp__line sg-54" x1="18" y1="103" x2="214" y2="103" />
+            <line class="pp__line sg-55" x1="18" y1="112" x2="196" y2="112" />
+            <line class="pp__line sg-56" x1="18" y1="121" x2="206" y2="121" />
+            <line class="pp__line sg-57" x1="18" y1="130" x2="184" y2="130" />
+            <line class="pp__line sg-58" x1="18" y1="139" x2="210" y2="139" />
+            <line class="pp__line sg-59" x1="18" y1="148" x2="200" y2="148" />
+            <line class="pp__line sg-60" x1="18" y1="157" x2="214" y2="157" />
+            <line class="pp__line sg-61" x1="18" y1="166" x2="188" y2="166" />
+            <line class="pp__line sg-62" x1="18" y1="175" x2="204" y2="175" />
+            <line class="pp__line sg-63" x1="18" y1="184" x2="176" y2="184" />
+            <line class="pp__line sg-64" x1="18" y1="193" x2="212" y2="193" />
+            <line class="pp__line sg-65" x1="18" y1="202" x2="194" y2="202" />
+            <line class="pp__line sg-66" x1="18" y1="211" x2="208" y2="211" />
+            <line class="pp__line sg-67" x1="18" y1="220" x2="182" y2="220" />
+            <line class="pp__line sg-68" x1="18" y1="229" x2="206" y2="229" />
+            <line class="pp__line sg-69" x1="18" y1="238" x2="198" y2="238" />
+            <line class="pp__line sg-70" x1="18" y1="247" x2="166" y2="247" />
+            <line class="pp__rule sg-71" x1="18" y1="258" x2="214" y2="258" />
+            <line class="pp__cell sg-72" x1="18" y1="266" x2="78" y2="266" />
+            <line class="pp__cell sg-72" x1="88" y1="266" x2="124" y2="266" />
+            <line class="pp__cell sg-72" x1="132" y1="266" x2="166" y2="266" />
+            <line class="pp__cell sg-72" x1="176" y1="266" x2="214" y2="266" />
+            <line class="pp__cell sg-73" x1="18" y1="275" x2="78" y2="275" />
+            <line class="pp__cell sg-73" x1="88" y1="275" x2="124" y2="275" />
+            <line class="pp__cell sg-73" x1="132" y1="275" x2="166" y2="275" />
+            <line class="pp__cell sg-73" x1="176" y1="275" x2="214" y2="275" />
+            <line class="pp__cell sg-74" x1="18" y1="284" x2="78" y2="284" />
+            <line class="pp__cell sg-74" x1="88" y1="284" x2="124" y2="284" />
+            <line class="pp__cell sg-74" x1="132" y1="284" x2="166" y2="284" />
+            <line class="pp__cell sg-74" x1="176" y1="284" x2="214" y2="284" />
+            <line class="pp__cell sg-75" x1="18" y1="293" x2="78" y2="293" />
+            <line class="pp__cell sg-75" x1="88" y1="293" x2="124" y2="293" />
+            <line class="pp__cell sg-75" x1="132" y1="293" x2="166" y2="293" />
+            <line class="pp__cell sg-75" x1="176" y1="293" x2="214" y2="293" />
+            <line class="pp__cell sg-76" x1="18" y1="302" x2="78" y2="302" />
+            <line class="pp__cell sg-76" x1="88" y1="302" x2="124" y2="302" />
+            <line class="pp__cell sg-76" x1="132" y1="302" x2="166" y2="302" />
+            <line class="pp__cell sg-76" x1="176" y1="302" x2="214" y2="302" />
+            <line class="pp__cell sg-77" x1="18" y1="311" x2="78" y2="311" />
+            <line class="pp__cell sg-77" x1="88" y1="311" x2="124" y2="311" />
+            <line class="pp__cell sg-77" x1="132" y1="311" x2="166" y2="311" />
+            <line class="pp__cell sg-77" x1="176" y1="311" x2="214" y2="311" />
+            <line class="pp__rule sg-78" x1="18" y1="320" x2="214" y2="320" />
           </svg>
           <div class="scan" aria-hidden="true"></div>
           <span class="pp-counter" id="ex-page">Page 14 / 24</span>
         </div>
 
         <div class="latch-list">
-          <div class="latch" style="--i:0"><span class="latch__k">Asset</span><span class="latch__slot"><span class="latch__v">Marisol Residences, JVC</span><i class="latch__caret"></i></span></div>
-          <div class="latch" style="--i:1"><span class="latch__k">Tenure</span><span class="latch__slot"><span class="latch__v">Freehold</span><i class="latch__caret"></i></span></div>
-          <div class="latch" style="--i:2"><span class="latch__k">Purchase price</span><span class="latch__slot"><span class="latch__v">AED 12,480,000</span><i class="latch__caret"></i></span></div>
-          <div class="latch" style="--i:3"><span class="latch__k">Net lettable</span><span class="latch__slot"><span class="latch__v">9,272 sq ft</span><i class="latch__caret"></i></span></div>
-          <div class="latch" style="--i:4"><span class="latch__k">Price / sq ft</span><span class="latch__slot"><span class="latch__v">AED 1,346</span><i class="latch__caret"></i></span></div>
-          <div class="latch" style="--i:5"><span class="latch__k">Units</span><span class="latch__slot"><span class="latch__v">12</span><i class="latch__caret"></i></span></div>
-          <div class="latch" style="--i:6"><span class="latch__k">Contracted rent</span><span class="latch__slot"><span class="latch__v">AED 912,000</span><i class="latch__caret"></i></span></div>
-          <div class="latch" style="--i:7"><span class="latch__k">Service charge</span><span class="latch__slot"><span class="latch__v">AED 12.50 / sq ft</span><i class="latch__caret"></i></span></div>
-          <div class="latch" style="--i:8"><span class="latch__k">Opex</span><span class="latch__slot"><span class="latch__v">AED 238,100</span><i class="latch__caret"></i></span></div>
-          <div class="latch" style="--i:9"><span class="latch__k">Vacancy</span><span class="latch__slot"><span class="latch__v">1 of 12 · unit 303</span><i class="latch__caret"></i></span></div>
-          <div class="latch" style="--i:10"><span class="latch__k">Ejari</span><span class="latch__slot"><span class="latch__v">11 of 12 registered</span><i class="latch__caret"></i></span></div>
-          <div class="latch" style="--i:11"><span class="latch__k">Payment terms</span><span class="latch__slot"><span class="latch__v">4 cheques (mode)</span><i class="latch__caret"></i></span></div>
+          <div class="latch sg-34" ><span class="latch__k">Asset</span><span class="latch__slot"><span class="latch__v">Marisol Residences, JVC</span><i class="latch__caret"></i></span></div>
+          <div class="latch sg-35" ><span class="latch__k">Tenure</span><span class="latch__slot"><span class="latch__v">Freehold</span><i class="latch__caret"></i></span></div>
+          <div class="latch sg-41" ><span class="latch__k">Purchase price</span><span class="latch__slot"><span class="latch__v">AED 12,480,000</span><i class="latch__caret"></i></span></div>
+          <div class="latch sg-79" ><span class="latch__k">Net lettable</span><span class="latch__slot"><span class="latch__v">9,272 sq ft</span><i class="latch__caret"></i></span></div>
+          <div class="latch sg-80" ><span class="latch__k">Price / sq ft</span><span class="latch__slot"><span class="latch__v">AED 1,346</span><i class="latch__caret"></i></span></div>
+          <div class="latch sg-81" ><span class="latch__k">Units</span><span class="latch__slot"><span class="latch__v">12</span><i class="latch__caret"></i></span></div>
+          <div class="latch sg-82" ><span class="latch__k">Contracted rent</span><span class="latch__slot"><span class="latch__v">AED 912,000</span><i class="latch__caret"></i></span></div>
+          <div class="latch sg-83" ><span class="latch__k">Service charge</span><span class="latch__slot"><span class="latch__v">AED 12.50 / sq ft</span><i class="latch__caret"></i></span></div>
+          <div class="latch sg-84" ><span class="latch__k">Opex</span><span class="latch__slot"><span class="latch__v">AED 238,100</span><i class="latch__caret"></i></span></div>
+          <div class="latch sg-85" ><span class="latch__k">Vacancy</span><span class="latch__slot"><span class="latch__v">1 of 12 · unit 303</span><i class="latch__caret"></i></span></div>
+          <div class="latch sg-86" ><span class="latch__k">Ejari</span><span class="latch__slot"><span class="latch__v">11 of 12 registered</span><i class="latch__caret"></i></span></div>
+          <div class="latch sg-87" ><span class="latch__k">Payment terms</span><span class="latch__slot"><span class="latch__v">4 cheques (mode)</span><i class="latch__caret"></i></span></div>
         </div>
       </div>
 
-      <div class="ex-exit" style="margin-block-start:var(--s-20)">
-        <div class="rule rule--strong" style="margin-block-end:var(--s-16)"></div>
+      <div class="ex-exit sg-88" >
+        <div class="rule rule--strong sg-33" ></div>
         <div class="row row--between row--wrap row--12">
           <span class="t-label c-2">Review ledger ready · 24 fields · 3 below confidence threshold</span>
           <button class="btn btn--primary btn--sm" type="button">Open review</button>
@@ -1174,7 +1174,7 @@
       <span class="t-micro section__note">One A4 sheet · print.css</span>
     </div>
 
-    <div class="row row--12 no-print" style="margin-block-end:var(--s-12)">
+    <div class="row row--12 no-print sg-17" >
       <button class="btn btn--secondary btn--sm" type="button" onclick="window.print()">Print preview</button>
       <span class="t-caption c-3">Print forces paper tokens regardless of the on-screen theme; chrome, gauges rails and buttons drop out.</span>
     </div>
@@ -1215,7 +1215,7 @@
 
       <div class="ic-sheet__body">
         <div class="stack stack--16">
-          <div class="tbl-wrap" data-density="compact" style="max-block-size:none">
+          <div class="tbl-wrap sg-89" data-density="compact" >
             <table class="tbl">
               <thead><tr><th scope="col">Line</th><th scope="col" class="num w-money">FY2025 vendor</th><th scope="col" class="num w-money">Meridian</th><th scope="col" class="num w-money">Variance</th></tr></thead>
               <tbody>
@@ -1272,158 +1272,6 @@
 
 </main>
 
-<script>
-(() => {
-  'use strict';
-
-  /* ---- theme toggle ------------------------------------------------- */
-  const root = document.documentElement;
-  const bDark = document.getElementById('theme-dark');
-  const bLight = document.getElementById('theme-light');
-  const setTheme = (t) => {
-    root.setAttribute('data-theme', t);
-    bDark.setAttribute('aria-pressed', String(t === 'dark'));
-    bLight.setAttribute('aria-pressed', String(t === 'light'));
-  };
-  bDark.addEventListener('click', () => setTheme('dark'));
-  bLight.addEventListener('click', () => setTheme('light'));
-
-  /* ---- swatch board ------------------------------------------------- */
-  const swatches = {
-    'sw-ground': ['bg-000', 'bg-100', 'bg-200', 'bg-300', 'bg-400'],
-    'sw-struct': ['hairline', 'hairline-strong', 'hairline-glint'],
-    'sw-text': ['text-1', 'text-2', 'text-3', 'text-4'],
-    'sw-sem': ['accent', 'accent-bright', 'accent-tint', 'pos', 'cau', 'neg', 'neu']
-  };
-  const paint = () => {
-    const cs = getComputedStyle(root);
-    for (const [id, names] of Object.entries(swatches)) {
-      const host = document.getElementById(id);
-      host.textContent = '';
-      for (const n of names) {
-        const val = cs.getPropertyValue('--' + n).trim();
-        const el = document.createElement('div');
-        el.className = 'plate';
-        el.style.padding = '0';
-        el.style.overflow = 'hidden';
-        const chip = document.createElement('div');
-        chip.style.blockSize = '56px';
-        chip.style.background = 'var(--' + n + ')';
-        chip.style.borderBlockEnd = '1px solid var(--hairline)';
-        const meta = document.createElement('div');
-        meta.style.padding = '8px 10px';
-        meta.innerHTML = '<div class="t-micro c-2">--' + n + '</div>' +
-                         '<div class="t-micro c-4" style="margin-block-start:3px">' + val + '</div>';
-        el.append(chip, meta);
-        host.append(el);
-      }
-    }
-  };
-  paint();
-  new MutationObserver(paint).observe(root, { attributes: true, attributeFilter: ['data-theme'] });
-
-  /* ---- CSS count-up: swap to the formatted string on animationend ---- */
-  const band = document.getElementById('kpi-band');
-  const COUNT_MS = 640;
-  const runCount = () => {
-    band.querySelectorAll('.kpi').forEach((k, i) => {
-      k.classList.remove('kpi--in');
-      void k.offsetWidth;
-      k.classList.add('kpi--in');
-      // Belt and braces: if the tab is throttled and animationend never
-      // arrives, the settled figure must still appear. A number is never
-      // allowed to be stuck mid-roll.
-      clearTimeout(k.__t);
-      k.__t = setTimeout(() => k.classList.remove('kpi--in'), COUNT_MS + i * 60 + 160);
-    });
-  };
-  band.addEventListener('animationend', (e) => {
-    if (e.animationName === 'count') e.target.closest('.kpi')?.classList.remove('kpi--in');
-  });
-  document.getElementById('replay-count').addEventListener('click', runCount);
-
-  /* ---- gauges: set the needle after paint so the 700ms sweep is seen - */
-  const seatNeedles = (jitter) => {
-    document.querySelectorAll('.gauge__needle').forEach((n) => {
-      const base = parseFloat(n.dataset.deg);
-      const d = jitter ? base + (Math.random() * 40 - 20) : base;
-      n.style.setProperty('--deg', d.toFixed(2));
-    });
-  };
-  document.getElementById('needle-stress').addEventListener('click', () => {
-    seatNeedles(true);
-    setTimeout(() => seatNeedles(false), 900);
-  });
-
-  /* ---- table density ------------------------------------------------ */
-  const wrap = document.getElementById('rentroll');
-  document.getElementById('density').addEventListener('click', (e) => {
-    const b = e.target.closest('button'); if (!b) return;
-    wrap.dataset.density = b.dataset.d;
-    b.parentElement.querySelectorAll('button')
-      .forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
-  });
-
-  /* ---- user edit: flash the cell, never animate the number ---------- */
-  const cell = document.getElementById('edit-target');
-  document.getElementById('edit-cell').addEventListener('click', () => {
-    cell.innerHTML = '769 <span class="sqm">71.4</span>';
-    cell.classList.remove('cell--flash'); void cell.offsetWidth;
-    cell.classList.add('cell--flash');
-  });
-
-  const fieldRow = document.getElementById('field-commit');
-  document.getElementById('commit-flash').addEventListener('click', () => {
-    fieldRow.classList.remove('field--committed'); void fieldRow.offsetWidth;
-    fieldRow.classList.add('field--committed');
-  });
-
-  /* ---- flags: replay the margin rules ------------------------------- */
-  const replayFlags = () => {
-    document.querySelectorAll('.flag').forEach((f) => {
-      f.classList.remove('flag--in'); void f.offsetWidth; f.classList.add('flag--in');
-    });
-  };
-  document.getElementById('replay-flags').addEventListener('click', replayFlags);
-
-  /* ---- auth plate draw-in ------------------------------------------- */
-  const plate = document.getElementById('auth-plate');
-  document.getElementById('replay-auth').addEventListener('click', () => {
-    const c = plate.cloneNode(true);
-    plate.replaceWith(c);
-    c.id = 'auth-plate';
-  });
-
-  /* ---- the extraction sequence -------------------------------------- */
-  const ex = document.getElementById('extract');
-  const pct = document.getElementById('ex-pct');
-  const pageNo = document.getElementById('ex-page');
-  const FLOOR = 4200;
-  let tick = null;
-
-  const runExtract = () => {
-    clearInterval(tick);
-    ex.classList.remove('ex--run');
-    void ex.offsetWidth;
-    ex.classList.add('ex--run');
-    const t0 = performance.now();
-    pageNo.textContent = 'Page 14 / 24';
-    tick = setInterval(() => {
-      const p = Math.min(1, (performance.now() - t0) / FLOOR);
-      pct.textContent = String(Math.round(p * 100)).padStart(3, '0') + '%';
-      if (p >= 1) { clearInterval(tick); pageNo.textContent = 'Page 24 / 24'; }
-    }, 60);
-  };
-  document.getElementById('run-extract').addEventListener('click', runExtract);
-
-  /* ---- first paint: seat needles, roll the KPIs, score the flags ----- */
-  requestAnimationFrame(() => {
-    seatNeedles(false);
-    runCount();
-    replayFlags();
-    runExtract();
-  });
-})();
-</script>
+<script type="module" src="/js/styleguide.js"></script>
 </body>
 </html>

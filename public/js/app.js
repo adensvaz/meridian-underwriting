@@ -2041,6 +2041,8 @@ function renderUnderwriting(panel) {
         state.runId = payload.runId;
         state.overrides = {};
         state.detail = await API.deals.get(deal.id);
+        // Arm the reveal. Only a completed run earns it.
+        state.reveal = true;
         renderDeal("underwriting");
       } catch (err) {
         setLoading(runButton, false, "Run underwriting");
@@ -2126,6 +2128,12 @@ function kpiBand(result) {
   // group, which is why they need a container of their own.
   const support = el("div", { class: "band__support" });
 
+  // The reveal is earned by a run, not by a tab click. Read-and-clear, so it
+  // plays exactly once and a later re-render of the same result is instant.
+  const reveal = state.reveal === true;
+  state.reveal = false;
+  if (reveal) band.classList.add("band--reveal");
+
   summary.forEach((cv, index) => {
     const text = fmt(cv.value, cv.format, cv.precision);
     const tile = el("div", { class: `kpi${index === 0 ? " kpi--hero" : ""}` });
@@ -2159,8 +2167,8 @@ function kpiBand(result) {
 
     const target = countTarget(typeof cv.value === "number" ? cv.value : 0);
     tile.style.setProperty("--target", String(target));
-    if (!reducedMotion() && target > 0) {
-      tile.classList.add("kpi--in", "kpi--draw");
+    if (reveal && !reducedMotion() && target > 0) {
+      tile.classList.add("kpi--in");
       const settle = () => tile.classList.remove("kpi--in");
       tile.addEventListener("animationend", (event) => {
         if (event.animationName === "count") settle();
@@ -2168,10 +2176,10 @@ function kpiBand(result) {
       // The formatted value is hidden while the digits roll. If the roll never
       // finishes — a backgrounded tab freezes the timeline — the figure would
       // stay invisible, and a KPI band with no numbers in it is a broken
-      // product. This guarantees the settled value appears either way.
-      setTimeout(settle, 1200 + index * 60);
-    } else {
-      tile.classList.add("kpi--draw");
+      // product. This guarantees the settled value appears either way. The
+      // floor tracks the re-cut beats: last tile lands at 850 + 5x50, plus the
+      // count's own 640ms, plus headroom.
+      setTimeout(settle, 2000 + index * 50);
     }
 
     (index === 0 ? band : support).append(tile);
@@ -2474,10 +2482,19 @@ function renderAnalysis(panel) {
       ),
     );
   } else {
+    // The headline leaves the narrative block. Inside it, `.narrative p` was
+    // overriding `.t-title` on specificity and setting the one sentence a
+    // principal actually reads as body copy. It is a title card, so it is
+    // composed as one.
+    const verdict = el(
+      "div",
+      { class: "verdict" },
+      el("p", { class: "verdict__line", text: narrative.headline }),
+    );
+
     const block = el(
       "div",
       { class: "narrative" },
-      el("p", { class: "t-title", css: { "margin-block-end": "var(--s-16)" }, text: narrative.headline }),
       ...String(narrative.summary || "")
         .split(/\n{2,}/)
         .filter(Boolean)
@@ -2490,7 +2507,7 @@ function renderAnalysis(panel) {
         narrative.status && narrative.status !== "ok" ? el("span", { text: String(narrative.status) }) : null,
       ),
     );
-    panel.append(el("div", { class: "section" }, sectionHead("Analysis"), block));
+    panel.append(el("div", { class: "section" }, sectionHead("Analysis"), verdict, block));
   }
 
   let stagger = 0;
@@ -2678,7 +2695,26 @@ function paintRail() {
   if (signOut) signOut.addEventListener("click", () => API.logout());
 }
 
+// One breath on sign-in: the wordmark alone on the void, then the rail and the
+// canvas draw in. No new element and no travel — the wordmark is already where
+// it belongs; everything else is simply not there yet. Once per session.
+function breathe() {
+  let owed = false;
+  try {
+    owed = window.sessionStorage.getItem("meridian.breath") === "1";
+    if (owed) window.sessionStorage.removeItem("meridian.breath");
+  } catch {
+    /* No storage, no title card. It is a grace note, not a requirement. */
+  }
+  if (!owed) return;
+  const shell = document.querySelector(".shell");
+  if (!shell) return;
+  shell.classList.add("shell--breath");
+  setTimeout(() => shell.classList.remove("shell--breath"), 1200);
+}
+
 async function boot() {
+  breathe();
   await API.requireSession();
   paintRail();
 

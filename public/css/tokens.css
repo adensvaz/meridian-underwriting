@@ -31,7 +31,17 @@
   --accent-bright: #A6C8E0;                   /* live / computing */
   --accent-tint: rgba(122, 167, 199, .10);
 
-  --pos: #5AA98D;  --pos-tint: rgba(90, 169, 141, .10);   /* jade, not green */
+  /* Health is the absence of alarm, not the presence of green. A passing state
+     gets PRESENCE — full-strength text, a solid hairline — never a hue. Green
+     for "good" is a habit: if everything that passes is green, green stops
+     meaning anything and the screen reads as a dashboard. Declared once and
+     inherited by both themes, because `--text-1` and `--hairline-strong`
+     already carry the theme.
+     Consequence: caution and negative are the only chromatic things on a
+     healthy screen, and one amber rule on a grey page is deafening. */
+  --pos: var(--text-1);                    /* presence, not colour */
+  --pos-line: var(--hairline-strong);      /* a solid hairline, not a jade one */
+  --pos-tint: transparent;
   --cau: #C99A4E;  --cau-tint: rgba(201, 154, 78, .10);   /* brass, not yellow */
   --neg: #C86B5E;  --neg-tint: rgba(200, 107, 94, .10);   /* oxide, not red */
   --neu: #8894A2;  --neu-tint: rgba(136, 148, 162, .10);
@@ -49,6 +59,11 @@
      below. Without the second half a raised surface reads as a flat rectangle
      rather than an object. */
   --glint: inset 0 1px 0 var(--hairline-glint), inset 0 -1px 0 var(--edge-fall);
+  /* The hero light pool. Once per screen, behind the dominant figure only.
+     At 2.8% it is below conscious perception — the figure simply looks lit
+     rather than printed. Twice and it becomes atmosphere, which is the thing
+     this system is avoiding. The only gradient permitted anywhere. */
+  --hero-pool: rgba(255, 255, 255, .028);
 }
 
 /* --------------------------------------------------------------------------
@@ -72,8 +87,6 @@
 
     --accent: #2E6B8F; --accent-bright: #1F5678;
     --accent-tint: rgba(46, 107, 143, .09);
-
-    --pos: #1E7A5E; --pos-tint: rgba(30, 122, 94, .10);
     --cau: #8A6512; --cau-tint: rgba(138, 101, 18, .10);
     --neg: #A33F32; --neg-tint: rgba(163, 63, 50, .10);
     --neu: #5A6570; --neu-tint: rgba(90, 101, 112, .10);
@@ -86,6 +99,10 @@
        black on #FBFAF8 would read as a border, which is exactly the thing the
        single light source is meant to replace. */
     --edge-fall: rgba(31, 28, 22, .07);
+    /* On paper the pool inverts: a faint warm shadow, since 2.8% white on
+       #F2F0EC is genuinely nothing. Same corner as the dark theme, matching
+       how --hairline-glint already inverts its top-edge catch. */
+    --hero-pool: rgba(31, 28, 22, .035);
   }
 }
 
@@ -103,8 +120,6 @@
 
   --accent: #2E6B8F; --accent-bright: #1F5678;
   --accent-tint: rgba(46, 107, 143, .09);
-
-  --pos: #1E7A5E; --pos-tint: rgba(30, 122, 94, .10);
   --cau: #8A6512; --cau-tint: rgba(138, 101, 18, .10);
   --neg: #A33F32; --neg-tint: rgba(163, 63, 50, .10);
   --neu: #5A6570; --neu-tint: rgba(90, 101, 112, .10);
@@ -117,6 +132,10 @@
      on #FBFAF8 would read as a border, which is exactly the thing the single
      light source is meant to replace. */
   --edge-fall: rgba(31, 28, 22, .07);
+  /* On paper the pool inverts: a faint warm shadow, since 2.8% white on
+     #F2F0EC is genuinely nothing. Same corner as the dark theme, matching how
+     --hairline-glint already inverts its top-edge catch. */
+  --hero-pool: rgba(31, 28, 22, .035);
 }
 
 /* --------------------------------------------------------------------------

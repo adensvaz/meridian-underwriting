@@ -120,9 +120,9 @@
   inset-block-start: 2px;
   inset-inline-start: var(--s-8);
   font-family: var(--font-mono);
-  font-size: 8px;
+  font-size: var(--fs-micro);
   line-height: 1;
-  letter-spacing: .10em;
+  letter-spacing: var(--ls-micro);
   color: var(--accent);
 }
 
@@ -168,12 +168,14 @@
   color: var(--text-3);
 }
 
+/* Was 26px/1.15/-0.020em — display-m in all but the one number that mattered.
+   An invented size that close to a token is not a decision, it is drift. */
 .tile__v {
   font-family: var(--font-display);
-  font-size: 26px;
-  line-height: 1.15;
+  font-size: var(--fs-display-m);
+  line-height: var(--lh-display-m);
   font-weight: 300;
-  letter-spacing: -0.020em;
+  letter-spacing: var(--ls-display-m);
   color: var(--text-1);
   direction: ltr;
   unicode-bidi: isolate;
@@ -195,9 +197,11 @@
    amount is the evidence, and it sits underneath.
    -------------------------------------------------------------------------- */
 
+/* The soft case gets a hairline, not a hue. Only a hard bind is chromatic —
+   which is what makes the oxide rule mean something when it appears. */
 .solve__verdict {
   padding-inline-start: var(--flag-gutter);
-  border-inline-start: 2px solid var(--accent);
+  border-inline-start: 2px solid var(--pos-line);
   display: flex;
   flex-direction: column;
   gap: var(--s-6);
@@ -229,16 +233,19 @@
 
 .solve__fig {
   font-family: var(--font-display);
-  font-size: 28px;
-  line-height: 1.15;
+  font-size: var(--fs-display-m);
+  line-height: var(--lh-display-m);
   font-weight: 300;
-  letter-spacing: -0.020em;
+  letter-spacing: var(--ls-display-m);
   color: var(--text-1);
   direction: ltr;
   unicode-bidi: isolate;
 }
 
-.solve__stat--hero .solve__fig { font-size: 40px; line-height: 1.05; letter-spacing: -0.025em; }
+/* The solved facility used to set at display-l, which made it a second hero on
+   a page that already has one at 70px — and if two things shout, neither is
+   heard. It keeps its distinction the way the rest of this system marks
+   importance: the stronger rule above it, not a bigger size. */
 
 @container panel (max-width: 900px) {
   .solve__band { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -321,7 +328,7 @@
   box-shadow: var(--glint);
 }
 
-.cov--has { border-inline-start-color: var(--pos); }
+.cov--has { border-inline-start-color: var(--pos-line); }
 
 .cov__head {
   display: flex;

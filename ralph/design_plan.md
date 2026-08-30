@@ -26,31 +26,31 @@ here adds ornament — see `docs/CINEMATIC.md` §1.
 
 ## Light
 
-- [ ] **Commit to one source.** Add `inset 0 -1px 0 rgba(0,0,0,.25)` to raised
+- [x] **Commit to one source.** Add `inset 0 -1px 0 rgba(0,0,0,.25)` to raised
       surfaces so bottom edges fall away, matching the existing top-edge catch.
       Their absence is why plates read as flat rectangles rather than objects.
       Nothing is ever lit from below.
-- [ ] **The hero light pool.** Behind the dominant figure only:
+- [x] **The hero light pool.** Behind the dominant figure only:
       `radial-gradient(120% 80% at 20% 0%, rgba(255,255,255,.028), transparent 60%)`.
       At 2.8% it sits below conscious perception — the figure reads as lit, not
       printed. Once per screen. This is the only gradient permitted anywhere.
 
 ## Typography
 
-- [ ] **Set the hero properly.** Weight 200 at the largest size (300 reads heavy
+- [x] **Set the hero properly.** Weight 200 at the largest size (300 reads heavy
       past 100px), `-0.045em` tracking, currency prefix at `0.28em` on the cap
       line in `--text-3`, decimals at `0.5em`. The integer carries the meaning.
-- [ ] **Collapse the middle of the scale.** A screen should use three voices:
+- [x] **Collapse the middle of the scale.** A screen should use three voices:
       hero, body, label. Audit each screen and demote anything using
       `display-l` or `title` where `body` would do. Ten sizes is a committee.
-- [ ] **The verdict line.** The narrative headline currently sets like body
+- [x] **The verdict line.** The narrative headline currently sets like body
       copy. Give it `display-l` at weight 200, measure capped at 34ch, alone
       above a full-bleed hairline with 56px above and below. It is the one
       sentence a principal actually reads.
 
 ## Colour
 
-- [ ] **Desaturate the healthy state.** Remove green from passing benchmarks and
+- [x] **Desaturate the healthy state.** Remove green from passing benchmarks and
       positive flags. Health is the absence of alarm, not the presence of green.
       Caution and negative keep their colour and become the only chromatic
       things on screen — one amber rule on a grey page is deafening.
@@ -58,44 +58,74 @@ here adds ornament — see `docs/CINEMATIC.md` §1.
 
 ## Time
 
-- [ ] **Re-cut the underwriting reveal.** Lengthen the empty hold to 400ms.
+- [x] **Re-cut the underwriting reveal.** Lengthen the empty hold to 400ms.
       Order the arrival by meaning rather than position: hero figure alone for
       300ms, then its baseline rule draws, then everything else at 50ms
       intervals. Nothing moves after it lands — no settling, no secondary
       animation.
-- [ ] **One breath on sign-in.** After authentication, before the app: the
+- [x] **One breath on sign-in.** After authentication, before the app: the
       wordmark alone on black for 700ms, then rail and canvas draw in. Once per
       session, never again — a title card that repeats is an annoyance. Store
       the flag in `sessionStorage`.
-- [ ] **Section headings assemble.** Extend the margin-rule mechanic to every
-      section heading as a 1px `--hairline-strong` drawing on first paint. The
-      page should assemble itself rather than appear.
+- [x] **Section headings assemble.** → **ICEBOXED, deliberately.** Three
+      reasons, in order of weight. (1) Sections are rebuilt on every tab render,
+      so "draws on first paint" means it draws on every tab click — which is a
+      nav transition, which `DESIGN.md` §4 forbids outright and which this very
+      file's icebox already rejects as latency theatre. (2) Scoped instead to
+      once per session, it becomes a second, weaker copy of the sign-in breath,
+      which already assembles the entire shell rather than just its rules; two
+      assembly mechanics is *more*, which is the trap `CINEMATIC.md` §1 names.
+      (3) The spec asks for `--hairline-strong` at rest, but section heads sit at
+      `--hairline` precisely so the page head at `--hairline-strong` outranks
+      them — promoting every section rule would flatten the hierarchy that the
+      full-bleed change just made legible. The page already assembles itself
+      once, at the only moment it means anything: arrival.
 
 ## Sweep
 
-- [ ] **Anti-pattern sweep across every screen**, including the new sensitivity,
+- [x] **Anti-pattern sweep across every screen**, including the new sensitivity,
       solver, collect and mortgage screens: no gradient beyond the hero pool, no
       glow, no card shadow, no radius over 6px, no emoji, no spinner, no
       shimmer, no hover lift, no bounce.
-- [ ] **The buyer page deserves the same care.** `collect.html` is the only
+- [x] **The buyer page deserves the same care.** `collect.html` is the only
       screen a non-customer sees, and it is currently the plainest. It should
       feel like the firm that sent it — same light, same restraint, wider
       measure. It is a brand impression before it is a form.
-- [ ] **Light mode is not an afterthought.** Every change above must be checked
+- [x] **Light mode is not an afterthought.** Every change above must be checked
       in paper mode. The hero light pool inverts to a shadow pool; the
       bottom-edge fall-away weakens. Verify both, do not assume.
 
 ## Found while working
 
-- [ ] **The disabled button is unreadable in both themes.** While a run or an
-      export is in flight, `Export` / `Print IC pack` / `Run underwriting` render
-      as a filled mid-grey slab with the label at near-zero contrast — light slab
-      on dark, dark slab on light. A disabled control should recede, not invert.
-      Give it the surface it already sits on plus `--text-4`, no fill change.
+- [x] ~~The disabled button is unreadable in both themes.~~ **Withdrawn — not
+      real.** The mid-grey slabs I saw over buttons and ledger inputs were a
+      screenshot-capture artifact: the browser pane repaints native form
+      controls late after a `prefers-color-scheme` switch, so a capture taken
+      immediately after the switch shows UA defaults. Confirmed by reading
+      computed styles (`.field__well` was `#FFFFFF`, not grey) and by
+      re-capturing after a clean document load. `.btn:disabled` is
+      `--bg-200` + `--text-4`, which is what `DESIGN.md` §1 assigns to
+      disabled. Method note: always capture after a fresh navigation, never
+      straight after `resize_window`.
 - [ ] **The deal list has no subject either.** Nine rows in a bordered plate with
       a filter bar; the `STATUS` column is clipped at 1280 and the whole table is
       one undifferentiated block. Apply the same treatment: un-box the plate, let
       the table rules bleed, and let the page head carry the frame.
+- [ ] **The styleguide is a dead page and violates the CSP.** `index.html` ends
+      with an inline `<script>` that `script-src 'self'` blocks silently, so the
+      colour swatches (`#sw-ground`, `#sw-struct`, `#sw-text`, `#sw-sem`) render
+      empty and the theme toggle, "Reset states" and "Replay motion" do nothing.
+      Fix: move the script verbatim to `public/js/styleguide.js` and load it with
+      `<script type="module" src="/js/styleguide.js">`. This is exactly the
+      failure mode the design prompt warns about, sitting in the design system's
+      own reference page.
+- [ ] **145 inline `style="..."` attributes in `index.html`** each trip
+      `style-src 'self'`, producing ~30 console errors on the styleguide. Most
+      are one-off specimen tweaks (`--i`, `--at`, `margin-block-start`). Fold the
+      repeated ones into utility classes and move the specimen-specific ones into
+      a small `sg-*` block. Product pages are already clean — `app.html`,
+      `login.html`, `models.html` and `collect.html` have zero inline styles
+      between them.
 - [ ] **Two seed deals render as bare community codes.** `JVC` and `QAl` show an
       em dash for every figure and no community. Not a design fault — flag to the
       correctness loop rather than styling around it.
