@@ -25,9 +25,14 @@ cd "$(dirname "$0")/.." || exit 1
 
 MAX_ITERATIONS="${MAX_ITERATIONS:-20}"
 SENTINEL="MVP COMPLETE"
-PROMPT_FILE="ralph/PROMPT.md"
-JOURNAL="ralph/JOURNAL.md"
-PLAN="ralph/fix_plan.md"
+# Overridable so the same driver can run a different track. The safety
+# machinery — green-before-start, verify-after, commit-each, stall detection —
+# is identical whatever the work is.
+#
+#   PROMPT_FILE=ralph/DESIGN_PROMPT.md PLAN=ralph/design_plan.md ./ralph/loop.sh
+PROMPT_FILE="${PROMPT_FILE:-ralph/PROMPT.md}"
+JOURNAL="${JOURNAL:-ralph/JOURNAL.md}"
+PLAN="${PLAN:-ralph/fix_plan.md}"
 DRY_RUN="${DRY_RUN:-0}"
 
 log() { printf '\n\033[1m%s\033[0m\n' "$*"; }
