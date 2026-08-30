@@ -1,0 +1,371 @@
+/* ==========================================================================
+   DATUM — print.css
+   Paper mode: the one-page Investment Committee export.
+   A4 portrait, warm-neutral ink on white, hairlines that survive a laser
+   printer, everything above the fold of a single sheet.
+   ========================================================================== */
+
+@page {
+  size: A4 portrait;
+  margin: 14mm 14mm 12mm;
+}
+
+@media print {
+
+  /* ----------------------------------------------------------------------
+     1. Force paper tokens regardless of the on-screen theme.
+     ---------------------------------------------------------------------- */
+
+  :root,
+  :root[data-theme="light"],
+  :root[data-theme="dark"] {
+    color-scheme: light;
+
+    --bg-000: #FFFFFF; --bg-100: #FFFFFF; --bg-200: #FFFFFF;
+    --bg-300: #FFFFFF; --bg-400: #FFFFFF;
+
+    --hairline: #C8C4BC;
+    --hairline-strong: #8B867D;
+    --hairline-glint: transparent;
+
+    --text-1: #000000; --text-2: #333B42; --text-3: #5F6771; --text-4: #8B9299;
+
+    --accent: #1F5678; --accent-bright: #1F5678; --accent-tint: transparent;
+    --pos: #14624A; --cau: #6E4F0A; --neg: #8C3125; --neu: #444C55;
+    --pos-tint: transparent; --cau-tint: transparent;
+    --neg-tint: transparent; --neu-tint: transparent;
+
+    --band-1: rgba(0, 0, 0, .10);
+    --band-5: rgba(0, 0, 0, .22);
+
+    --glint: none;
+    --shadow-overlay: none;
+
+    --page-px: 0;
+    --gutter: 8mm;
+    --row-h: 22px;
+    --cell-px: 6px;
+  }
+
+  html, body {
+    background: #FFFFFF !important;
+    color: #000000;
+    font-size: 9pt;
+    line-height: 1.35;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    /* Nothing animates on paper. */
+    animation: none !important;
+    transition: none !important;
+  }
+
+  /* ----------------------------------------------------------------------
+     2. Strip the application chrome.
+     ---------------------------------------------------------------------- */
+
+  .rail,
+  .inspector,
+  .sg-bar,
+  .toolbar,
+  .segmented,
+  .dropbank,
+  .empty,
+  .auth,
+  .scan,
+  .pp-stage,
+  .stage-rail,
+  .btn,
+  .no-print { display: none !important; }
+
+  .shell { display: block; block-size: auto; }
+  .canvas { overflow: visible; block-size: auto; }
+
+  .page {
+    max-inline-size: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  /* Only the IC sheet survives onto paper. Everything the screen needed
+     around it — page head, section heads, sibling panels — is chrome. */
+  body:has(.ic-sheet) .page-head { display: none; }
+  body:has(.ic-sheet) .section:not(:has(.ic-sheet)) { display: none; }
+  .section:has(.ic-sheet) { margin: 0; container-type: normal; }
+  .section:has(.ic-sheet) > .section__head { display: none; }
+
+  /* ----------------------------------------------------------------------
+     3. The IC sheet — one page, no orphans.
+     ---------------------------------------------------------------------- */
+
+  .ic-sheet {
+    display: block;
+    inline-size: 100%;
+    padding: 0;
+    background: none;
+    border: 0;
+    border-radius: 0;
+    break-inside: avoid;
+  }
+
+  .ic-sheet__head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 8mm;
+    padding-block-end: 2mm;
+    border-block-end: 1pt solid var(--hairline-strong);
+    margin-block-end: 4mm;
+  }
+
+  .ic-sheet__title { font-size: 15pt; font-weight: 400; letter-spacing: -0.02em; }
+  .ic-sheet__sub { font-size: 8pt; color: var(--text-2); }
+
+  .ic-sheet__stamp {
+    font-family: var(--font-mono);
+    font-size: 6.5pt;
+    letter-spacing: .10em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    text-align: end;
+  }
+
+  /* KPI band prints as a flat measured strip, not as tiles. */
+  .band, .ic-band {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0;
+    border-block: 1pt solid var(--hairline);
+    margin-block-end: 4mm;
+    break-inside: avoid;
+  }
+
+  .band > .kpi--hero { grid-column: span 1; }
+
+  .kpi {
+    border: 0;
+    border-inline-end: 1pt solid var(--hairline);
+    border-radius: 0;
+    padding: 2.5mm 3mm;
+    gap: 1mm;
+    background: none;
+  }
+
+  .band > .kpi:last-child { border-inline-end: 0; }
+  .kpi::after { display: none; }
+  .kpi__label { font-size: 6pt; letter-spacing: .12em; color: var(--text-3); }
+  .kpi__figure { font-size: 15pt; font-weight: 400; letter-spacing: -0.02em; }
+  .kpi--hero .kpi__figure { font-size: 17pt; }
+  .kpi__sub, .kpi__delta { font-size: 6.5pt; }
+  .kpi__val::after { content: none !important; }
+  .kpi__fmt { visibility: visible !important; }
+  .kpi__instrument { display: none; }
+
+  /* Two-column body: table on the left, narrative and flags on the right. */
+  .ic-sheet__body {
+    display: grid;
+    grid-template-columns: minmax(0, 58fr) minmax(0, 42fr);
+    gap: 6mm;
+    align-items: start;
+  }
+
+  /* ----------------------------------------------------------------------
+     4. Tables on paper.
+     ---------------------------------------------------------------------- */
+
+  .tbl-wrap {
+    max-block-size: none;
+    overflow: visible;
+    border: 0;
+    border-block: 1pt solid var(--hairline-strong);
+    border-radius: 0;
+    background: none;
+    break-inside: avoid;
+  }
+
+  /* Screen column min-widths keep figures from reflowing in a scrolling
+     viewport. On a fixed sheet they would push the table past the column,
+     so the paper table sizes to its content instead. */
+  .w-unit, .w-name, .w-area, .w-money, .w-pct, .w-date, .w-tag { min-inline-size: 0; }
+
+  .tbl { font-size: 7.5pt; inline-size: 100%; table-layout: auto; }
+
+  .tbl thead th {
+    position: static;
+    background: none;
+    border-block-end: 0.5pt solid var(--hairline-strong);
+    font-size: 6pt;
+    letter-spacing: .10em;
+    color: var(--text-2);
+  }
+
+  .tbl th:first-child, .tbl td:first-child {
+    position: static;
+    background: none;
+    border-inline-end: 0;
+  }
+
+  .tbl th, .tbl td { block-size: auto; padding: 1.1mm 1.6mm; }
+  .tbl tbody tr > * { border-block-end: 0.4pt solid var(--band-1); }
+  .tbl tbody tr:nth-child(5n) > * { border-block-end-color: var(--band-5); }
+  .tbl tbody tr:hover > * { background: none; }
+
+  .tbl tfoot td {
+    position: static;
+    background: none;
+    border-block-start: 0.8pt solid var(--hairline-strong);
+    font-weight: 600;
+  }
+
+  thead { display: table-header-group; }
+  tfoot { display: table-footer-group; }
+  tr, .field, .flag, .narrative { break-inside: avoid; }
+
+  /* ----------------------------------------------------------------------
+     5. Narrative and flags on paper.
+     ---------------------------------------------------------------------- */
+
+  .narrative {
+    max-inline-size: none;
+    border-inline-start: 1.5pt solid var(--text-2);
+    padding-inline-start: 3mm;
+  }
+
+  .narrative p { font-size: 8pt; line-height: 1.45; }
+  .narrative p + p { margin-block-start: 2mm; }
+  .narrative__prov { font-size: 6pt; margin-block-start: 2mm; }
+
+  .flag-stack { gap: 3mm; }
+  .flag { padding-inline-start: 3mm; padding-block: 0; }
+  .flag::before { inline-size: 1.5pt; }
+  .flag__title { font-size: 6.5pt; letter-spacing: .10em; margin-block-end: 1mm; }
+  .flag__body { font-size: 7.5pt; line-height: 1.4; max-inline-size: none; }
+  .flag__meta { font-size: 6pt; margin-block-start: 1mm; }
+
+  /* Capital-stack strip: four measured columns, never a wrapping flex row. */
+  .kv-strip {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 2mm 4mm;
+    margin-block-start: 3mm;
+  }
+
+  .dpair__k { font-size: 6pt; letter-spacing: .10em; }
+  .dpair__v { font-size: 8pt; }
+
+  /* Extracted-field ledger prints as a plain measured list. */
+  .ledger { border: 0; border-block: 1pt solid var(--hairline); border-radius: 0; }
+  .ledger__head { background: none; border-block-end: 0.5pt solid var(--hairline-strong); padding: 1mm 0; }
+  .field { padding: 1mm 0; grid-template-rows: auto; }
+  .field__well { background: none; border: 0; min-block-size: 0; padding: 0; }
+  .field__cite { opacity: 1; }
+  .conf__bar { background: var(--text-3) !important; }
+
+  /* Pills and tags print as ruled text, not as filled chips. */
+  .pill, .tag {
+    background: none !important;
+    border-color: var(--hairline-strong);
+    color: var(--text-2);
+    font-size: 6pt;
+    block-size: auto;
+    padding-block: 0.3mm;
+  }
+
+  .pill__dot { background: var(--text-2); }
+
+  /* Gauges print; the needle keeps its last committed angle. */
+  .gauge__arc, .gauge__tick { stroke: var(--hairline-strong); }
+  .gauge__needle { stroke: #000; }
+  .gauge__band { stroke: var(--neg); }
+
+  /* ----------------------------------------------------------------------
+     6. Footer stamp
+     ---------------------------------------------------------------------- */
+
+  .ic-sheet__foot {
+    margin-block-start: 4mm;
+    padding-block-start: 2mm;
+    border-block-start: 0.5pt solid var(--hairline);
+    display: flex;
+    justify-content: space-between;
+    gap: 6mm;
+    font-family: var(--font-mono);
+    font-size: 6pt;
+    letter-spacing: .10em;
+    text-transform: uppercase;
+    color: var(--text-3);
+  }
+
+  a[href]::after { content: none; }
+}
+
+/* --------------------------------------------------------------------------
+   On screen, the IC sheet renders as a paper preview so the export can be
+   reviewed without invoking the print dialog.
+   -------------------------------------------------------------------------- */
+
+.ic-sheet {
+  display: grid;
+  gap: var(--s-16);
+  padding: var(--s-24);
+  background: var(--bg-200);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-md);
+  box-shadow: var(--glint);
+}
+
+.ic-sheet__head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--s-24);
+  padding-block-end: var(--s-12);
+  border-block-end: 1px solid var(--hairline-strong);
+}
+
+.ic-sheet__stamp {
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-micro);
+  letter-spacing: var(--ls-micro);
+  text-transform: uppercase;
+  color: var(--text-3);
+  text-align: end;
+}
+
+.ic-sheet__body {
+  display: grid;
+  grid-template-columns: minmax(0, 58fr) minmax(0, 42fr);
+  gap: var(--s-24);
+  align-items: start;
+}
+
+.ic-sheet__foot {
+  margin-block-start: var(--s-8);
+  padding-block-start: var(--s-12);
+  border-block-start: 1px solid var(--hairline);
+  display: flex;
+  justify-content: space-between;
+  gap: var(--s-24);
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-micro);
+  letter-spacing: var(--ls-micro);
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.ic-band {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--s-8);
+}
+
+@media (max-width: 820px) {
+  .ic-sheet__body { grid-template-columns: minmax(0, 1fr); }
+  .ic-band { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

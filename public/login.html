@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark light">
+<title>Sign in — Meridian</title>
+<link rel="stylesheet" href="/css/tokens.css">
+<link rel="stylesheet" href="/css/layout.css">
+<link rel="stylesheet" href="/css/components.css">
+<link rel="stylesheet" href="/css/extraction.css">
+<link rel="stylesheet" href="/css/print.css">
+<script type="module" src="/js/login.js"></script>
+</head>
+<body>
+<main class="auth-page" id="auth-page">
+  <form class="auth" id="login-form" novalidate>
+    <div class="auth__mark"><span class="wordmark">Meridian</span></div>
+
+    <h1 class="auth__title t-title">Sign in</h1>
+    <p class="auth__sub t-caption">Commercial real estate underwriting. Your deal data stays on this server.</p>
+
+    <div class="auth__fields">
+      <div class="f">
+        <label class="f__label" for="email">Email</label>
+        <input class="input" id="email" name="email" type="email" autocomplete="username"
+               autocapitalize="off" autocorrect="off" spellcheck="false" required>
+      </div>
+
+      <div class="f">
+        <label class="f__label" for="password">Password</label>
+        <input class="input" id="password" name="password" type="password"
+               autocomplete="current-password" required>
+        <p class="f__error" id="login-error" role="alert" hidden></p>
+      </div>
+    </div>
+
+    <button class="btn btn--primary btn--lg" type="submit" id="login-submit">Sign in</button>
+
+    <div class="auth__foot t-micro" id="auth-foot">AED · UAE COMMERCIAL · v1.0</div>
+  </form>
+</main>
+</body>
+</html>

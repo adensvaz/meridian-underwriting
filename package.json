@@ -1,0 +1,26 @@
+{
+  "name": "meridian",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Meridian — AI-powered commercial real estate deal underwriting. Upload OM / rent roll / T12, extract with AI, underwrite with a user-editable model, generate an analyst narrative.",
+  "engines": {
+    "node": ">=22.6"
+  },
+  "scripts": {
+    "init": "node src/scripts/init-db.ts",
+    "seed": "node src/scripts/seed.ts",
+    "reset": "node src/scripts/reset.ts",
+    "serve": "node src/server.ts",
+    "dev": "node --watch src/server.ts",
+    "check": "node src/scripts/selfcheck.ts",
+    "test": "node --test src/lib/parse/parse.test.ts",
+    "smoke": "node src/scripts/smoke.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.68.0",
+    "mammoth": "^1.8.0",
+    "pdf-parse": "^1.1.1",
+    "xlsx": "^0.18.5"
+  }
+}
