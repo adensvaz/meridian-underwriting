@@ -228,3 +228,11 @@ underwriting logic as data.
       `.style.` assignment in `public/**`, pointing at the adopted-stylesheet
       helper once it exists. A gate that cannot see a product-wide silent
       failure is not yet doing its job.
+
+- [ ] **Verify the split intake in a browser.** The mortgage intake was written
+      and wired but never seen rendering — the session had expired and typing a
+      password into a login form is off-limits. Sign in, click New deal, switch
+      to "Assess a buyer", create one, and confirm: the mode switch reads
+      clearly, no property-title question appears, the six numbers seed, the
+      assessment runs on create, and it lands on Underwriting rather than
+      Documents.

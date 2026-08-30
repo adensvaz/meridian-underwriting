@@ -372,3 +372,50 @@
   .sens__cell--breach { background: none; }
   .sens__cell--base { box-shadow: none; background: none; }
 }
+
+/* ------------------------------------------------------------------ intake */
+/* The product does two jobs and they start from different places: a property
+   underwriting starts from an asset, a mortgage assessment starts from a
+   person. The switch is deliberately not a dropdown — the choice changes every
+   subsequent question, so it should be visible rather than folded away. */
+
+.intake { display: grid; gap: var(--s-12); }
+
+.intake__modes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--s-8);
+}
+
+.intake__mode {
+  display: grid;
+  gap: 2px;
+  text-align: start;
+  padding: var(--s-12) var(--s-16);
+  background: var(--bg-200);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-md);
+  cursor: pointer;
+  color: var(--text-2);
+  font: inherit;
+  transition: border-color var(--t-hover) var(--e-precise),
+              background var(--t-hover) var(--e-precise);
+}
+
+.intake__mode:hover { border-color: var(--hairline-strong); }
+
+.intake__mode:focus-visible { outline: 1px solid var(--accent); outline-offset: 2px; }
+
+/* Selection is carried by a 2px inline-start rule and full-weight text, not by
+   a fill. One accent hue, used once. */
+.intake__mode.is-active {
+  border-color: var(--hairline-strong);
+  border-inline-start: 2px solid var(--accent);
+  background: var(--bg-300);
+}
+
+.intake__mode-label { font-size: 14px; font-weight: 500; color: var(--text-2); }
+.intake__mode.is-active .intake__mode-label { color: var(--text-1); }
+.intake__mode-hint { font-size: 12px; line-height: 1.4; color: var(--text-3); }
+
+.input--num { text-align: end; font-variant-numeric: tabular-nums; }

@@ -311,10 +311,227 @@ function renderDeals() {
   );
 }
 
+/**
+ * The product does two different jobs and they need two different intakes.
+ *
+ * Underwriting a property starts from an asset — its community, tenure, and a
+ * pack of documents from the seller. Assessing a buyer for a mortgage starts
+ * from a person — their nationality band, employment and income — and the
+ * documents come from the buyer afterwards, through a link.
+ *
+ * One form asking every question is what produced a mortgage applicant being
+ * asked whether they were freehold or leasehold.
+ */
 function newDealForm() {
+  if (!state.newDealMode) state.newDealMode = "property";
+  const hasMortgage = state.models.some((m) => m.assetType === "mortgage");
+  if (!hasMortgage) return propertyIntakeForm();
+
+  const choose = (mode) => {
+    state.newDealMode = mode;
+    renderDeals();
+  };
+
+  const tab = (mode, label, hint) =>
+    el(
+      "button",
+      {
+        class: `intake__mode${state.newDealMode === mode ? " is-active" : ""}`,
+        type: "button",
+        "aria-pressed": state.newDealMode === mode ? "true" : "false",
+        on: { click: () => choose(mode) },
+      },
+      el("span", { class: "intake__mode-label", text: label }),
+      el("span", { class: "intake__mode-hint", text: hint }),
+    );
+
+  return el(
+    "div",
+    { class: "intake" },
+    el(
+      "div",
+      { class: "intake__modes", role: "group", "aria-label": "What are you starting?" },
+      tab("property", "Underwrite a property", "You have an OM, rent roll and T12"),
+      tab("mortgage", "Assess a buyer", "You have an applicant and need their documents"),
+    ),
+    state.newDealMode === "mortgage" ? mortgageIntakeForm() : propertyIntakeForm(),
+  );
+}
+
+/**
+ * Mortgage intake. Asks only what a broker already knows from the first phone
+ * call, and nothing that belongs to a property title. The four fields that
+ * actually move the answer are here — nationality band and price set the
+ * Central Bank LTV ceiling, employment sets the age limit, income sets the debt
+ * burden ratio — so the assessment is real the moment the case is created.
+ */
+function mortgageIntakeForm() {
+  const model = state.models.find((m) => m.assetType === "mortgage");
+
+  const name = el("input", {
+    class: "input", id: "mi-name", type: "text", required: true,
+    placeholder: "Ahmed K — Marina 2BR",
+  });
+  const community = el("input", {
+    class: "input", id: "mi-community", type: "text", list: "nd-communities",
+    placeholder: "Dubai Marina",
+  });
+  const communityList = el("datalist", { id: "nd-communities" },
+    DUBAI_COMMUNITIES.map((c) => el("option", { value: c })));
+
+  const applicant = selectField("mi-applicant", [
+    ["expat_resident", "Expat resident"],
+    ["uae_national", "UAE national"],
+    ["non_resident", "Non-resident"],
+  ]);
+  const employment = selectField("mi-employment", [
+    ["salaried", "Salaried"],
+    ["self_employed", "Self-employed"],
+  ]);
+  const firstProperty = selectField("mi-first", [
+    ["yes", "First property in the UAE"],
+    ["no", "Second or subsequent"],
+  ]);
+
+  const numeric = (id, placeholder) =>
+    el("input", { class: "input input--num", id, type: "text", inputmode: "decimal", placeholder });
+
+  const price = numeric("mi-price", "2,750,000");
+  const income = numeric("mi-income", "52,000");
+  const age = numeric("mi-age", "41");
+  const cash = numeric("mi-cash", "800,000");
+
+  const errorLine = el("p", { class: "f__error", hidden: true, role: "alert" });
+  const submit = button("Create assessment", { variant: "primary", type: "submit" });
+
+  // Accepts "2,750,000" and "AED 2.75m" as readily as a bare number — a broker
+  // types what the client said, not what a parser wants.
+  const num = (input) => {
+    const raw = String(input.value ?? "").trim().toLowerCase().replace(/aed|,|\s/g, "");
+    if (!raw) return null;
+    const mult = raw.endsWith("m") ? 1e6 : raw.endsWith("k") ? 1e3 : 1;
+    const n = Number(mult === 1 ? raw : raw.slice(0, -1));
+    return Number.isFinite(n) ? n * mult : null;
+  };
+
+  return el(
+    "form",
+    {
+      class: "plate plate--pad no-print",
+      on: {
+        submit: async (event) => {
+          event.preventDefault();
+          errorLine.hidden = true;
+
+          const label = name.value.trim();
+          if (!label) {
+            errorLine.textContent = "Give the assessment a name — the applicant's name works well.";
+            errorLine.hidden = false;
+            name.focus();
+            return;
+          }
+          if (!model) {
+            errorLine.textContent = "No mortgage affordability model is available in your library.";
+            errorLine.hidden = false;
+            return;
+          }
+
+          setLoading(submit, true, "Creating");
+          try {
+            const payload = await API.deals.create({
+              name: label,
+              community: community.value.trim() || null,
+              city: "Dubai",
+              assetType: "mortgage",
+              market: model.market || "AE",
+              depth: model.depth || "quick",
+              currency: model.currency || "AED",
+              modelId: model.id,
+            });
+            const id = payload.deal.id;
+
+            // Seed the answers the broker already has. Anything left blank
+            // stays blank rather than becoming a default that looks like a
+            // finding — the review screen shows which is which.
+            const updates = [
+              { key: "applicant_type", value: applicant.control.value },
+              { key: "employment_type", value: employment.control.value },
+              { key: "is_first_property", value: firstProperty.control.value === "yes" },
+            ];
+            const maybe = [
+              ["property_price", num(price)],
+              ["gross_monthly_income", num(income)],
+              ["applicant_age", num(age)],
+              ["buyer_available_cash", num(cash)],
+            ];
+            for (const [key, value] of maybe) if (value !== null) updates.push({ key, value });
+
+            await API.deals.patchFields(id, updates);
+            // Run it immediately. A broker who has typed six numbers should see
+            // the answer, not an empty tab inviting them to press a button.
+            try {
+              await API.deals.underwrite(id, { depth: model.depth || "quick" });
+            } catch {
+              // A case with too little to compute is still a valid case; the
+              // underwriting screen will say what is missing.
+            }
+
+            state.newDealOpen = false;
+            go(`#/deals/${id}/underwriting`);
+          } catch (err) {
+            setLoading(submit, false, "Create assessment");
+            errorLine.textContent = err.message;
+            errorLine.hidden = false;
+          }
+        },
+      },
+    },
+    sectionHead(
+      "Assess a buyer",
+      "What you already know from the first call. Anything you leave blank stays blank — you can fill it in later, or collect it from the buyer's documents.",
+    ),
+    el(
+      "div",
+      { class: "grid grid--tight" },
+      fieldCell("col-6", "Assessment name", name, "mi-name"),
+      fieldCell("col-6", "Community", community, "mi-community"),
+      fieldCell("col-4", "Applicant", applicant.node, "mi-applicant"),
+      fieldCell("col-4", "Employment", employment.node, "mi-employment"),
+      fieldCell("col-4", "Property", firstProperty.node, "mi-first"),
+      fieldCell("col-3", "Target price (AED)", price, "mi-price"),
+      fieldCell("col-3", "Gross monthly income (AED)", income, "mi-income"),
+      fieldCell("col-3", "Age", age, "mi-age"),
+      fieldCell("col-3", "Cash available (AED)", cash, "mi-cash"),
+    ),
+    communityList,
+    errorLine,
+    el(
+      "div",
+      { class: "row row--8", css: { "margin-block-start": "var(--s-16)" } },
+      submit,
+      button("Cancel", {
+        variant: "ghost",
+        onClick: () => {
+          state.newDealOpen = false;
+          renderDeals();
+        },
+      }),
+    ),
+  );
+}
+
+function propertyIntakeForm() {
   const markets = distinct(state.models.map((m) => m.market)).sort();
-  const assetTypes = distinct(state.models.map((m) => m.assetType)).sort();
+  // Mortgage is not an asset type in any meaningful sense — it is a different
+  // JOB. Leaving it in this list asked a mortgage applicant whether their
+  // freehold or leasehold, then dropped them on a screen wanting an Offering
+  // Memorandum. The two intakes are split below and this list carries property
+  // asset types only.
+  const assetTypes = distinct(state.models.map((m) => m.assetType))
+    .filter((a) => a !== "mortgage")
+    .sort();
   const depths = distinct(state.models.map((m) => m.depth));
+  const hasMortgageModel = state.models.some((m) => m.assetType === "mortgage");
 
   const name = el("input", { class: "input", id: "nd-name", type: "text", required: true, placeholder: "Marina Gate II — Tower A" });
   const community = el("input", { class: "input", id: "nd-community", type: "text", list: "nd-communities", placeholder: "Business Bay" });
