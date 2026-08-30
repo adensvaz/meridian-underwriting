@@ -21,7 +21,7 @@
 // Nothing here returns a formula. Callers get computed values plus the
 // presentation metadata (label, unit, format) needed to render them.
 
-import { runModel } from "./model.ts";
+import { coerceInputValue, runModel } from "./model.ts";
 import type { RunInput } from "./model.ts";
 import type { Format, InputDef, InputType, ModelDefinition } from "./types.ts";
 import type { Value } from "./expr.ts";
@@ -191,8 +191,13 @@ export function metricsOf(definition: ModelDefinition): Map<string, MetricInfo> 
 function baseValueOf(input: InputDef, base: Map<string, RunInput>): Value {
   const supplied = base.get(input.key);
   const v = supplied?.value;
-  if (v !== undefined && v !== null && v !== "") return v;
-  return input.default ?? null;
+  const raw = v !== undefined && v !== null && v !== "" ? v : (input.default ?? null);
+  // Coerce with the SAME rule the runner uses. Values come out of SQLite as
+  // TEXT, so a reviewer-edited figure is the string "0.055" — testing that for
+  // finiteness fails, which is why every preset that needed a numeric base
+  // reported itself unavailable on every real deal while working perfectly on
+  // model defaults.
+  return coerceInputValue(raw, input.type);
 }
 
 function resolveAxis(

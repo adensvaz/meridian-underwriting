@@ -208,7 +208,7 @@ export function runModel(options: RunOptions): RunResult {
 
     // Coerce to the declared type so a string "1,250,000" from a spreadsheet
     // does not silently poison every downstream formula.
-    value = coerce(value, input.type);
+    value = coerceInputValue(value, input.type);
 
     if (value !== null && typeof value === "number") {
       if (input.min !== undefined && value < input.min) {
@@ -494,7 +494,18 @@ function clampYears(raw: Value | undefined): number | null {
   return Math.min(n, 40);
 }
 
-function coerce(value: Value, type: string): Value {
+/**
+ * Coerces a stored value to its declared type.
+ *
+ * Exported because more than one caller needs it and they MUST agree. Values
+ * arrive from SQLite as TEXT — a reviewer-edited figure is the string "78000",
+ * not the number. The runner coerces on the way in, so underwriting is correct;
+ * anything else reading the same inputs and applying a different rule (or none)
+ * silently disagrees with the run. That is exactly how the sensitivity presets
+ * came to report themselves unavailable on every real deal: they tested the raw
+ * string for finiteness and it failed.
+ */
+export function coerceInputValue(value: Value, type: string): Value {
   if (value === null) return null;
 
   if (type === "boolean") {

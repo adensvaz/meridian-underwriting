@@ -2121,6 +2121,10 @@ function kpiBand(result) {
 
   const benchmarks = new Map((result.benchmarks || []).map((b) => [b.key, b]));
   const band = el("div", { class: "band" });
+  // The band is a composition, not a row of equals. The dominant figure holds
+  // the left of the frame alone; every supporting metric is ranged right as one
+  // group, which is why they need a container of their own.
+  const support = el("div", { class: "band__support" });
 
   summary.forEach((cv, index) => {
     const text = fmt(cv.value, cv.format, cv.precision);
@@ -2170,10 +2174,15 @@ function kpiBand(result) {
       tile.classList.add("kpi--draw");
     }
 
-    band.append(tile);
+    (index === 0 ? band : support).append(tile);
   });
 
-  return el("div", { class: "section" }, sectionHead("Headline", result.modelKey || ""), band);
+  band.append(support);
+
+  // No section head. The model and the run id are already stated in the toolbar
+  // directly above, so a "Headline" eyebrow over the headline figure was a
+  // label on a label. The figure carries its own.
+  return el("div", { class: "section" }, band);
 }
 
 function computedLines(result) {

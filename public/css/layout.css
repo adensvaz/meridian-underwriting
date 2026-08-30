@@ -23,9 +23,12 @@
 
 /* --- left rail --- */
 
+/* No border. The rail is the edge of the frame, not a panel sitting beside the
+   canvas — the one step from --bg-000 to --bg-100 is the separation, and a
+   hairline on top of it was drawing the box we are trying to get rid of.
+   Borders make panels; light makes space. */
 .rail {
   background: var(--bg-000);
-  border-inline-end: 1px solid var(--hairline);
   display: flex;
   flex-direction: column;
   min-block-size: 0;
@@ -72,9 +75,10 @@
 
 /* --- right inspector --- */
 
+/* The same rule on the opposite edge — leaving one bordered and one not would
+   make the system contradict itself. */
 .inspector {
   background: var(--bg-000);
-  border-inline-start: 1px solid var(--hairline);
   min-block-size: 0;
   overflow-y: auto;
   container-type: inline-size;
@@ -98,6 +102,24 @@
 @media (max-width: 720px)  { :root { --page-px: 16px; --gutter: 16px; } }
 
 /* Page header — title, meta, actions. Hairline underscores the whole band. */
+
+/* Full bleed. A rule that runs out of the frame implies the composition
+   continues past it; a rule that stops politely at the container implies a box.
+   The content keeps its page inset — only the rule leaves. */
+.page-head,
+.section__head {
+  margin-inline: calc(var(--page-px) * -1);
+  padding-inline: var(--page-px);
+}
+
+/* A head inside a plate or an overlay belongs to that surface, not the page. */
+.plate .section__head,
+.overlay .section__head,
+.sg-specimen .page-head,
+.sg-specimen .section__head {
+  margin-inline: 0;
+  padding-inline: 0;
+}
 
 .page-head {
   display: flex;
@@ -167,27 +189,38 @@
    A panel collapses 4-up to 2-up based on its own inline size.
    -------------------------------------------------------------------------- */
 
+/* Not an even grid of equals — a frame with a subject. The dominant figure
+   takes the left of the composition and the supporting metrics are ranged
+   right as one group, leaving the space beneath the figure empty. That
+   emptiness is the most expensive material available and it costs nothing. */
 .band {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--s-12);
+  grid-template-columns: minmax(0, 44fr) minmax(0, 56fr);
+  gap: var(--s-40) var(--s-80);
+  align-items: start;
 }
 
-/* The hero tile spans 2 columns. */
-.band > .kpi--hero { grid-column: span 2; }
-
-@container panel (max-width: 1000px) {
-  .band { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.band__support {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s-32) var(--s-40);
+  min-inline-size: 0;
 }
 
-@container panel (max-width: 560px) {
-  .band { grid-template-columns: minmax(0, 1fr); }
-  .band > .kpi--hero { grid-column: span 1; }
+/* A band with no dominant figure has nothing to range against. */
+.band:not(:has(> .kpi--hero)) { grid-template-columns: minmax(0, 1fr); }
+
+@container panel (max-width: 900px) {
+  .band { grid-template-columns: minmax(0, 1fr); gap: var(--s-40); }
+}
+
+@container panel (max-width: 520px) {
+  .band__support { grid-template-columns: minmax(0, 1fr); }
 }
 
 /* Fallback for containers that do not establish a query context. */
 @supports not (container-type: inline-size) {
-  @media (max-width: 1100px) { .band { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 1000px) { .band { grid-template-columns: minmax(0, 1fr); } }
 }
 
 /* --------------------------------------------------------------------------

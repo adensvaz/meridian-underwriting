@@ -42,8 +42,13 @@
 
   /* The single permitted overlay shadow. Never on a card. */
   --shadow-overlay: 0 24px 64px -16px rgba(0, 0, 0, .72);
-  /* The machined top edge. The cheapest luxury cue in the system. */
-  --glint: inset 0 1px 0 var(--hairline-glint);
+  /* The bottom edge, turning away from the source. */
+  --edge-fall: rgba(0, 0, 0, .25);
+  /* One light source, above and slightly behind the viewer. The top edge
+     catches it, the bottom edge falls away from it. Nothing is ever lit from
+     below. Without the second half a raised surface reads as a flat rectangle
+     rather than an object. */
+  --glint: inset 0 1px 0 var(--hairline-glint), inset 0 -1px 0 var(--edge-fall);
 }
 
 /* --------------------------------------------------------------------------
@@ -77,6 +82,10 @@
     --band-5: rgba(0, 0, 0, .07);
 
     --shadow-overlay: 0 24px 64px -16px rgba(31, 28, 22, .22);
+    /* On paper the fall-away is a soft warm shadow, not a black edge — 25%
+       black on #FBFAF8 would read as a border, which is exactly the thing the
+       single light source is meant to replace. */
+    --edge-fall: rgba(31, 28, 22, .07);
   }
 }
 
@@ -104,6 +113,10 @@
   --band-5: rgba(0, 0, 0, .07);
 
   --shadow-overlay: 0 24px 64px -16px rgba(31, 28, 22, .22);
+  /* On paper the fall-away is a soft warm shadow, not a black edge — 25% black
+     on #FBFAF8 would read as a border, which is exactly the thing the single
+     light source is meant to replace. */
+  --edge-fall: rgba(31, 28, 22, .07);
 }
 
 /* --------------------------------------------------------------------------

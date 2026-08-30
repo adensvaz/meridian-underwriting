@@ -6,20 +6,20 @@ here adds ornament — see `docs/CINEMATIC.md` §1.
 
 ## Composition
 
-- [ ] **The dominant figure.** On the Underwriting tab, price per square foot is
+- [x] **The dominant figure.** On the Underwriting tab, price per square foot is
       currently one tile among equals. Promote it: `clamp(64px, 9vw, 132px)`,
       weight 200, `letter-spacing: -0.045em`, set on the left third with at
       least 80px of air on three sides, supporting metrics ranged right. Every
       other tile drops a step in weight to make room. If two things shout,
       neither is heard.
-- [ ] **Full-bleed section rules.** Dividers currently stop at the container.
+- [x] **Full-bleed section rules.** Dividers currently stop at the container.
       Let them run to the viewport edge. A rule that leaves the frame implies
       the composition continues; one that stops politely implies a box. Single
       cheapest cinematic cue in the system.
-- [ ] **Un-border the rail.** Remove the left rail's inline-end border and let
+- [x] **Un-border the rail.** Remove the left rail's inline-end border and let
       the background step carry the separation. Borders make panels; light makes
       space.
-- [ ] **The label above the figure.** Move KPI eyebrows above their value with
+- [x] **The label above the figure.** Move KPI eyebrows above their value with
       12px of space, 10px, `+0.18em`, `--text-3`, mono. The eye should read the
       label then fall into the number. Reversed, the number arrives
       context-free.
@@ -84,6 +84,21 @@ here adds ornament — see `docs/CINEMATIC.md` §1.
 - [ ] **Light mode is not an afterthought.** Every change above must be checked
       in paper mode. The hero light pool inverts to a shadow pool; the
       bottom-edge fall-away weakens. Verify both, do not assume.
+
+## Found while working
+
+- [ ] **The disabled button is unreadable in both themes.** While a run or an
+      export is in flight, `Export` / `Print IC pack` / `Run underwriting` render
+      as a filled mid-grey slab with the label at near-zero contrast — light slab
+      on dark, dark slab on light. A disabled control should recede, not invert.
+      Give it the surface it already sits on plus `--text-4`, no fill change.
+- [ ] **The deal list has no subject either.** Nine rows in a bordered plate with
+      a filter bar; the `STATUS` column is clipped at 1280 and the whole table is
+      one undifferentiated block. Apply the same treatment: un-box the plate, let
+      the table rules bleed, and let the page head carry the frame.
+- [ ] **Two seed deals render as bare community codes.** `JVC` and `QAl` show an
+      em dash for every figure and no community. Not a design fault — flag to the
+      correctness loop rather than styling around it.
 
 ## Icebox
 

@@ -170,3 +170,29 @@ underwriting logic as data.
       still missing, without re-issuing the whole request.
 - [ ] Multi-bank comparison: same applicant, several lenders' LTV and rate
       policies side by side. This is what a broker actually sells.
+
+## Found by the sensitivity grid
+
+- [ ] **The exit-yield × rent-growth grid shows three identical columns.** At 3%,
+      4% and 5% market rent growth the levered IRR is 18.15% in every cell, then
+      moves again at 6%. This is *correct* engine behaviour — `dubai-residential-full`
+      drives in-place rent off the RERA permitted-increase tier, not off market
+      growth, so until the index moves enough to change tier the passing rent is
+      identical. But a committee reading three identical columns concludes the
+      tool is broken, and they are not wrong to. Either annotate the grid when
+      the RERA cap is what is flattening the response, or make the preset vary an
+      input the model is actually sensitive to. Do not "fix" it by removing the
+      cap — the cap is the most defensible thing in the model.
+- [ ] **The base case is not marked on the LTV × rate grid.** The deal's rate is
+      4.49% and the axis carries 4.5%, so `base.column` comes back null and the
+      base cell is unmarked. Snap an axis to the base value when it is within
+      half a step, or insert the exact base value into the series.
+- [ ] **Two seed deals render as bare community codes.** `JVC` and `QAl` show an
+      em dash for every figure and no community — they are stubs from manual
+      testing, not seeded demo data. Delete them from the demo database or give
+      them real figures; a prospect clicking one sees an empty deal.
+- [ ] **Cache-busting in `app.html` is incomplete.** The `?v=N` query is on
+      `app.js` only; its ES-module imports (`sensitivity.js`, `solver.js`,
+      `collect-admin.js`) are unversioned, so a stale module can survive a
+      deploy while its entry point updates. Version them together or drop the
+      scheme and rely on the `no-cache` header already set on HTML.

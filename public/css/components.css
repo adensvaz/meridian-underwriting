@@ -53,25 +53,31 @@
    1. KPI / METRIC TILE
    -------------------------------------------------------------------------- */
 
+/* No box. A metric is a label, a figure and the rule it sits on — the plate
+   around it was drawing a second, competing rectangle and flattening the
+   hierarchy to nothing. Space separates these now; the baseline rule anchors
+   them. This is what "the tile is ruled, not boxed in" always meant. */
 .kpi {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: var(--s-8);
-  padding: var(--s-16) var(--s-16) var(--s-20);
-  background: var(--bg-200);
-  border: 1px solid var(--hairline);
-  border-radius: var(--r-md);
-  box-shadow: var(--glint);
+  gap: var(--s-12);
+  padding-block-end: var(--s-12);
   overflow: hidden;
   min-inline-size: 0;
 }
 
+/* The counterweight. 10px tracked-out mono over a hairline-thin numeral is the
+   whole typographic idea. It sits above the figure with 12px of space so the
+   eye reads the label and then falls into the number — reversed, the number
+   arrives context-free. Was 11px sans at +0.14em, which is one more voice in
+   the scale than this system needs. */
 .kpi__label {
-  font-size: var(--fs-label);
-  line-height: var(--lh-label);
-  font-weight: var(--fw-label);
-  letter-spacing: var(--ls-label);
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  line-height: var(--lh-micro);
+  font-weight: var(--fw-micro);
+  letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--text-3);
 }
@@ -115,27 +121,29 @@
 
 [dir="rtl"] .kpi::after { transform-origin: 100% 50%; }
 
-/* Hero variant — the value is promoted to display-xl and given air. */
-.kpi--hero { padding: var(--s-24) var(--s-24) var(--s-32); gap: var(--s-12); }
+/* Every supporting figure drops a step in weight. If two things shout,
+   neither is heard. */
+.kpi:not(.kpi--hero) .kpi__figure { font-weight: 300; }
+
+/* The dominant figure. Scale far past comfort, weight 200 because 300 reads
+   heavy past 100px, and tighter tracking because large thin numerals drift
+   apart without it. Sized against the panel rather than the viewport — the
+   rail and the page padding are not the figure's business. */
+.kpi--hero { padding-block-end: var(--s-16); }
 
 .kpi--hero .kpi__figure {
-  font-size: var(--fs-display-xl);
-  line-height: var(--lh-display-xl);
-  font-weight: var(--fw-display-xl);
-  letter-spacing: var(--ls-display-xl);
+  font-size: clamp(64px, 9cqi, 132px);
+  line-height: 1;
+  font-weight: 200;
+  letter-spacing: -0.045em;
 }
 
 .kpi--hero::after { background: var(--text-3); }
 
-/* Below ~420px of panel the hero figure would clip. Demote a step rather
-   than let a number wrap or get cut. */
+/* Below ~420px of panel the hero figure would clip. Demote rather than let a
+   number wrap or get cut. */
 @container panel (max-width: 420px) {
-  .kpi--hero { padding: var(--s-20) var(--s-16) var(--s-24); }
-  .kpi--hero .kpi__figure {
-    font-size: var(--fs-display-l);
-    line-height: var(--lh-display-l);
-    letter-spacing: var(--ls-display-l);
-  }
+  .kpi--hero .kpi__figure { font-size: clamp(40px, 15cqi, 64px); }
 }
 
 /* Delta line — an 8px inline-SVG caret, never an emoji, never an arrow glyph. */

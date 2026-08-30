@@ -257,6 +257,10 @@
    The URL is the whole point of the panel, so it gets the width.
    -------------------------------------------------------------------------- */
 
+/* A long recipient or reference must ellipsis rather than widen the table off
+   the panel and take the revoke control with it. */
+.tbl td.cl-cell { max-inline-size: 220px; }
+
 .token__row {
   margin-block-start: var(--s-8);
   display: flex;

@@ -80,11 +80,22 @@ function daysUntil(iso) {
   return Math.ceil(ms / 86400000);
 }
 
+/**
+ * Kept short deliberately: this sits in a table cell that must not force the
+ * row wider than the panel, which would push the revoke control off the edge.
+ */
 function expiryText(iso) {
   const days = daysUntil(iso);
   if (days === null) return formatDate(iso);
   if (days <= 0) return `${formatDate(iso)} · expired`;
-  return `${formatDate(iso)} · ${days} day${days === 1 ? "" : "s"} left`;
+  return `${formatDate(iso)} · ${days}d left`;
+}
+
+function expiryLongText(iso) {
+  const days = daysUntil(iso);
+  if (days === null) return formatDate(iso);
+  if (days <= 0) return `${formatDate(iso)} — already expired`;
+  return `${formatDate(iso)} — ${days} day${days === 1 ? "" : "s"} from now`;
 }
 
 // -------------------------------------------------------------- the token --
@@ -145,7 +156,7 @@ function tokenPlate(created, onDone) {
         "div",
         { class: "dpair" },
         el("span", { class: "dpair__k", text: "Expires" }),
-        el("span", { class: "dpair__v", text: expiryText(created.expiresAt) }),
+        el("span", { class: "dpair__v", text: expiryLongText(created.expiresAt) }),
       ),
       el(
         "div",
@@ -362,8 +373,8 @@ function requestTable(ctx, requests, onChanged) {
       el(
         "tr",
         null,
-        el("th", { class: "w-name", scope: "col", text: "Recipient" }),
-        el("th", { class: "w-name", scope: "col", text: "Reference" }),
+        el("th", { class: "w-tag", scope: "col", text: "Recipient" }),
+        el("th", { class: "w-tag", scope: "col", text: "Reference" }),
         el("th", { class: "w-tag", scope: "col", text: "Status" }),
         el("th", { class: "num", scope: "col", text: "Items" }),
         el("th", { class: "num", scope: "col", text: "Uploads" }),
@@ -412,8 +423,8 @@ function requestTable(ctx, requests, onChanged) {
       el(
         "tr",
         null,
-        el("td", { class: "w-name u-truncate", text: request.recipientName || EM_DASH }),
-        el("td", { class: "w-name u-truncate", text: request.reference || EM_DASH }),
+        el("td", { class: "w-tag u-truncate cl-cell", text: request.recipientName || EM_DASH }),
+        el("td", { class: "w-tag u-truncate cl-cell", text: request.reference || EM_DASH }),
         el(
           "td",
           { class: "w-tag" },
@@ -623,7 +634,17 @@ export async function renderCollect(panel, ctx) {
                 draw();
               }),
             )
-          : el("div", { class: "toolbar no-print" }, el("div", { class: "spacer" }), newButton);
+          : el(
+              "div",
+              { class: "toolbar no-print" },
+              el("span", { class: "t-label c-3", text: "Buyer document collection" }),
+              el("span", {
+                class: "t-caption c-3",
+                text: "One link, one checklist, upload only. The buyer never gets an account.",
+              }),
+              el("div", { class: "spacer" }),
+              newButton,
+            );
 
     replace(
       panel,

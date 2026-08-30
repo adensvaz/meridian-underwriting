@@ -35,6 +35,7 @@ import {
   clear,
   el,
   empty,
+  frag,
   icon,
   notice,
   replace,
@@ -95,10 +96,52 @@ function metricOptions(result) {
   return [...seen.values()];
 }
 
-/** An axis tick. A cheque count is an integer even when the model declares no format. */
-function axisValueText(axis, value, currency) {
-  if (value === null || value === undefined) return EM_DASH;
-  if (typeof value !== "number") return String(value);
+/**
+ * How many decimal places a percentage needs to be stated exactly. The rounding
+ * step is not optional: 0.035 * 100 is 3.4999999999999996 and 0.55 * 100 is
+ * 55.00000000000001, so a naive integer test gives "3.50%" beside "55%" on the
+ * same axis.
+ */
+function percentDigits(value) {
+  const scaled = Math.round(value * 1e8) / 1e6;
+  if (Number.isInteger(scaled)) return 0;
+  if (Number.isInteger(Math.round(scaled * 1e7) / 1e6)) return 1;
+  return 2;
+}
+
+/**
+ * One precision for the whole axis — the fewest digits that state every tick on
+ * it exactly. A column of figures has to be a rigid rectangle, so 3.5% and 4.0%
+ * sit together and neither is padded to 3.50%.
+ */
+function axisTickPrecision(axis) {
+  let digits = 0;
+  for (const raw of axis.values || []) {
+    const value = coerceNumeric(raw);
+    if (value !== null) digits = Math.max(digits, percentDigits(value));
+  }
+  return digits;
+}
+
+/**
+ * An axis tick. Input values round-trip through SQLite as text, so a base value
+ * arrives as "0.75" and would otherwise print raw beside a column of formatted
+ * percentages. `exact` renders a single value on its own terms — the base case
+ * in the legend is prose, not a column, and 4.49% must not round to 4.5%.
+ */
+function axisValueText(axis, raw, currency, options = {}) {
+  if (raw === null || raw === undefined) return EM_DASH;
+  const value = coerceNumeric(raw);
+  if (value === null) return String(raw);
+
+  if (axis.format === "percent") {
+    return formatValue(
+      value,
+      "percent",
+      currency,
+      options.exact ? percentDigits(value) : axisTickPrecision(axis),
+    );
+  }
   const format = axis.format || (Number.isInteger(value) ? "integer" : undefined);
   return formatValue(value, format, currency);
 }
@@ -120,8 +163,10 @@ function thresholdText(sensitivity, currency) {
 function baseText(sensitivity, currency) {
   const { base, row, column } = sensitivity;
   const parts = [];
-  parts.push(`${row.label} ${axisValueText(row, row.baseValue, currency)}`);
-  if (column) parts.push(`${column.label} ${axisValueText(column, column.baseValue, currency)}`);
+  parts.push(`${row.label} ${axisValueText(row, row.baseValue, currency, { exact: true })}`);
+  if (column) {
+    parts.push(`${column.label} ${axisValueText(column, column.baseValue, currency, { exact: true })}`);
+  }
 
   const offGrid = [];
   if (row.baseIndex === null) offGrid.push(row.label.toLowerCase());
@@ -284,27 +329,59 @@ function renderError(mount, message) {
 
 // ------------------------------------------------------------ custom axes --
 
+function unique(values) {
+  return [...new Set(values)];
+}
+
+/**
+ * A default range around the deal's own base value. An integer input is rounded
+ * to whole numbers and de-duplicated: an axis that displays "38" while the model
+ * actually ran 38.2 is a grid that quietly lies about what it computed, and a
+ * small integer scaled by ±10% otherwise produces five identical columns.
+ */
 function seriesFor(input) {
   const base = coerceNumeric(input.value);
   if (input.type === "percent") {
     if (base === null || base <= 0) return [0, 0.01, 0.02, 0.03, 0.04, 0.05];
-    return AROUND_100BPS.map((d) => Math.round((base + d) * 1e6) / 1e6).filter((v) => v > 0);
+    return unique(AROUND_100BPS.map((d) => Math.round((base + d) * 1e6) / 1e6).filter((v) => v > 0));
   }
   if (base === null || base === 0) return [];
   const scaled = PLUS_MINUS_10PCT.map((m) => base * m);
-  return scaled.map((v) => (Math.abs(v) >= 1000 ? Math.round(v) : Math.round(v * 100) / 100));
+  if (input.type === "integer") return unique(scaled.map((v) => Math.round(v)));
+  return unique(scaled.map((v) => (Math.abs(v) >= 1000 ? Math.round(v) : Math.round(v * 100) / 100)));
 }
 
-function seriesText(input, currency) {
-  const values = seriesFor(input);
-  if (!values.length) return "";
-  if (input.type === "percent") return values.map((v) => String(v)).join(", ");
-  return values.map((v) => formatValue(v, undefined, currency, Number.isInteger(v) ? 0 : 2)).join(", ");
+/**
+ * Plain digits, no thousands separators. The separator between values is a
+ * comma, so writing 1,050,000 into the same field would make "1" and "050" two
+ * separate values on the axis — a grid that ran and meant nothing.
+ */
+function seriesText(input) {
+  return seriesFor(input)
+    .map((v) => String(Number(v.toFixed(6))))
+    .join(", ");
+}
+
+/**
+ * An analyst will paste "945,000, 997,500" out of a spreadsheet regardless of
+ * what the hint says, so a comma sitting inside a number is collapsed before
+ * the string is split on the commas that separate values.
+ */
+function stripGroupSeparators(raw) {
+  let text = String(raw || "");
+  for (let pass = 0; pass < 4; pass++) {
+    const next = text.replace(/(\d),(\d{3})(?!\d)/g, "$1$2");
+    if (next === text) break;
+    text = next;
+  }
+  return text;
 }
 
 function parseSeries(raw, type) {
-  return String(raw || "")
-    .split(/[,;\n]+/)
+  return stripGroupSeparators(raw)
+    .split(/[,;\n\t]+/)
+    .map((part) => part.trim())
+    .filter(Boolean)
     .map((part) => parseNumeric(part, type))
     .filter((v) => v !== null && Number.isFinite(v));
 }
@@ -328,13 +405,13 @@ function customPanel(ctx, onRun) {
   const options = inputs.map((i) => ({ value: i.key, label: i.label }));
 
   const rowSelect = selectControl(options, inputs[0].key, (key) => {
-    rowValues.value = seriesText(byKey.get(key), ctx.currency);
+    rowValues.value = seriesText(byKey.get(key));
   });
   const columnSelect = selectControl(
     [{ value: "", label: "None — one dimension" }, ...options],
     inputs[1] ? inputs[1].key : "",
     (key) => {
-      columnValues.value = key ? seriesText(byKey.get(key), ctx.currency) : "";
+      columnValues.value = key ? seriesText(byKey.get(key)) : "";
       columnValues.disabled = !key;
     },
   );
@@ -345,7 +422,7 @@ function customPanel(ctx, onRun) {
     spellcheck: "false",
     autocomplete: "off",
     "aria-label": "Row values",
-    value: seriesText(inputs[0], ctx.currency),
+    value: seriesText(inputs[0]),
   });
   const columnValues = el("input", {
     class: "input",
@@ -353,7 +430,7 @@ function customPanel(ctx, onRun) {
     spellcheck: "false",
     autocomplete: "off",
     "aria-label": "Column values",
-    value: inputs[1] ? seriesText(inputs[1], ctx.currency) : "",
+    value: inputs[1] ? seriesText(inputs[1]) : "",
     disabled: !inputs[1],
   });
 
@@ -599,12 +676,16 @@ function buildCheque(ctx, section, preset) {
 
 /**
  * @param {{dealId:string, currency:string, depth:string, modelId:string, result:object}} ctx
- * @returns {HTMLElement} a host holding the grid section and the cheque section
+ * @returns {DocumentFragment} the grid section and the cheque section
+ *
+ * A fragment rather than a wrapper element on purpose: `.section:first-child`
+ * zeroes the top margin, and a wrapper would make the grid the first child of
+ * itself — collapsing the 40px that separates it from the panel above.
  */
 export function sensitivitySection(ctx) {
   const gridSection = el("div", { class: "section" }, sectionHead("Sensitivity", "Resolving the presets for this model"));
   const chequeSection = el("div", { class: "section" });
-  const host = el("div", null, gridSection, chequeSection);
+  const host = frag(gridSection, chequeSection);
 
   (async () => {
     try {

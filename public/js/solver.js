@@ -82,7 +82,7 @@ function contextStrip(solution, result) {
   }
   return el(
     "div",
-    null,
+    { css: { "margin-block-start": "var(--s-32)" } },
     el("div", { class: "t-label c-3", text: "At the solved facility" }),
     strip,
   );
