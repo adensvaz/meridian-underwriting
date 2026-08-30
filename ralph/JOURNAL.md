@@ -144,3 +144,13 @@ that silently stops covering new tests.
 
 Gate: arch 0 errors · check 19/19 · smoke 28/28 · 142 tests.
 Backlog: 26 open, 14 closed.
+
+2026-08-30 — T12 normalisation enforced deterministically on both extraction
+paths. The prompt asked the model to mark one-off items non-recurring, but a
+prompt is a request, not a guarantee, and a lift-modernisation levy or a legal
+settlement that slips into a stabilised NOI overstates the deal for the whole
+hold. The rule now runs again in `persistPayload` regardless of which extractor
+produced the line. It only ever ADDS an exclusion, so it cannot quietly
+re-include something already excluded, and an uncategorised line now falls back
+to the deterministic categoriser so it still reaches the right total.
+Verified against seven real Dubai statement labels.

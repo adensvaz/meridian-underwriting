@@ -20,7 +20,7 @@ import { join } from "node:path";
 import { env } from "./env.ts";
 import { parseDocument } from "./parse/index.ts";
 import { extractFromDocument, PROMPT_VERSION, type ExtractionPayload } from "./ai/extract.ts";
-import { ruleBasedExtraction } from "./ai/fallback.ts";
+import { categoriseLabel, nonRecurringReason, ruleBasedExtraction } from "./ai/fallback.ts";
 import { aiAvailable } from "./ai/client.ts";
 import type { ModelDefinition } from "./engine/types.ts";
 import type { AuthenticatedUser } from "./auth/session.ts";
@@ -347,23 +347,43 @@ function persistPayload(
     replaceT12(
       dealId,
       ownerId,
-      t12.map((l, index) => ({
-        ordinal: index + 1,
-        raw_label: l.raw_label,
-        section: l.section,
-        category: l.category,
-        amount: l.amount,
-        months_covered: l.months_covered,
-        annualized:
-          typeof l.amount === "number" && l.months_covered > 0
-            ? (l.amount / l.months_covered) * 12
-            : null,
-        is_recurring: l.is_recurring ? 1 : 0,
-        exclude_reason: l.exclude_reason,
-        source_document_id: doc.id,
-        source_row: l.source_row,
-        confidence: l.confidence,
-      })),
+      t12.map((l, index) => {
+        // Deterministic normalisation pass, applied to BOTH extraction paths.
+        //
+        // The AI prompt asks the model to mark one-off items as non-recurring,
+        // but a prompt is a request, not a guarantee — and a lift-modernisation
+        // levy or a legal settlement that slips into a stabilised NOI overstates
+        // the deal for the entire hold. So the rule runs again here regardless
+        // of which extractor produced the line.
+        //
+        // It only ever ADDS an exclusion. If the model already flagged a line
+        // the reviewer's view of it is preserved, and nothing here can quietly
+        // re-include something that was excluded.
+        const detected = nonRecurringReason(l.raw_label);
+        const isRecurring = l.is_recurring && detected === null;
+        const excludeReason =
+          l.exclude_reason ?? (detected !== null && l.is_recurring ? detected : null);
+
+        return {
+          ordinal: index + 1,
+          raw_label: l.raw_label,
+          section: l.section,
+          // Fall back to the deterministic categoriser when the model left the
+          // bucket empty, so an uncategorised line still reaches the right total.
+          category: l.category ?? categoriseLabel(l.raw_label),
+          amount: l.amount,
+          months_covered: l.months_covered,
+          annualized:
+            typeof l.amount === "number" && l.months_covered > 0
+              ? (l.amount / l.months_covered) * 12
+              : null,
+          is_recurring: isRecurring ? 1 : 0,
+          exclude_reason: excludeReason,
+          source_document_id: doc.id,
+          source_row: l.source_row,
+          confidence: l.confidence,
+        };
+      }),
     );
   }
 

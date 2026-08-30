@@ -29,7 +29,7 @@ this file wholesale.
 - [x] Re-extraction must never clobber a human correction. There is a guard in (done — src/lib/db/repo.test.ts, 5 tests incl. rent-roll rows)
       `upsertAiField`, but no test proves it. Write one: extract, edit a field,
       re-extract, assert `user_value` survived and `ai_value` updated.
-- [ ] T12 normalisation rules are declared in the extraction prompt but not
+- [x] T12 normalisation rules are declared in the extraction prompt but not
       enforced anywhere. Add a deterministic post-pass that flags a line as
       non-recurring when its label matches a known one-off pattern (legal
       settlement, capital works booked as repairs, casualty, owner's asset

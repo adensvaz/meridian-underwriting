@@ -64,14 +64,14 @@ const NON_RECURRING_PATTERNS: Array<{ reason: string; test: RegExp }> = [
   { reason: "One-off levy raised by the Owners Association", test: /special\s*levy|one[-\s]?off|extraordinary/i },
 ];
 
-function categoriseLabel(label: string): (typeof T12_CATEGORIES)[number] | null {
+export function categoriseLabel(label: string): (typeof T12_CATEGORIES)[number] | null {
   for (const { category, test } of CATEGORY_PATTERNS) {
     if (test.test(label)) return category;
   }
   return null;
 }
 
-function nonRecurringReason(label: string): string | null {
+export function nonRecurringReason(label: string): string | null {
   for (const { reason, test } of NON_RECURRING_PATTERNS) {
     if (test.test(label)) return reason;
   }
