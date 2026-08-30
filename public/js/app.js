@@ -6,6 +6,9 @@
 // somebody who is not us, and none of them ever touch innerHTML.
 
 import * as API from "./api.js";
+import { renderCollect } from "./collect-admin.js";
+import { sensitivitySection } from "./sensitivity.js";
+import { solverSection } from "./solver.js";
 import {
   EM_DASH,
   areaFragment,
@@ -81,6 +84,7 @@ const TABS = [
   ["review", "Review"],
   ["underwriting", "Underwriting"],
   ["analysis", "Analysis"],
+  ["collect", "Collect"],
 ];
 
 // ---------------------------------------------------------------- formatting --
@@ -688,6 +692,7 @@ function renderDeal(tab) {
       "div",
       { class: "page-head__actions no-print" },
       pill(String(deal.status || "draft").toUpperCase(), STATUS_TONE[deal.status] || "neu"),
+      exportMenu(deal.id, Boolean(state.runId)),
       button("Print IC pack", { variant: "secondary", iconName: "print", onClick: () => window.print() }),
     ),
   );
@@ -696,6 +701,79 @@ function renderDeal(tab) {
 
   replace(view, head, tabBar(deal.id, tab), panel);
   renderTab(tab, panel);
+}
+
+/**
+ * The export menu. These are authenticated GET downloads, so they are triggered
+ * by navigation on an <a download> and never by fetch — the browser carries the
+ * session cookie, reads the Content-Disposition filename the server built, and
+ * writes the file itself. Pulling the bytes through fetch would mean rebuilding
+ * all of that in JavaScript and getting the filename wrong.
+ *
+ * Both endpoints export the LATEST PERSISTED RUN, so an un-underwritten deal has
+ * nothing to export and the items say so rather than downloading an error page.
+ */
+function exportMenu(dealId, hasRun) {
+  const base = `/api/deals/${encodeURIComponent(dealId)}/export`;
+
+  const item = (label, href, note) =>
+    el(
+      "a",
+      { class: "exp__item", href, download: true, role: "menuitem" },
+      el("span", { text: label }),
+      el("span", { class: "exp__note t-micro", text: note }),
+    );
+
+  const menu = el(
+    "div",
+    { class: "exp__menu overlay", role: "menu", hidden: true },
+    hasRun
+      ? frag(
+          item("Excel workbook", `${base}.xlsx`, "xlsx · 8 sheets"),
+          item("Flat CSV", `${base}.csv`, "csv · one row per line"),
+        )
+      : el("div", { class: "exp__empty t-caption c-3" }, el(
+          "span",
+          { text: "Run the underwriting first — an export reproduces the numbers that were signed off." },
+        )),
+  );
+
+  const trigger = button("Export", { variant: "secondary", iconName: "open" });
+  trigger.setAttribute("aria-haspopup", "menu");
+  trigger.setAttribute("aria-expanded", "false");
+
+  const wrap = el("div", { class: "exp no-print" }, trigger, menu);
+
+  const onDocument = (event) => {
+    if (event.type === "keydown" && event.key !== "Escape") return;
+    if (event.type === "pointerdown" && wrap.contains(event.target)) return;
+    close();
+  };
+
+  function close() {
+    menu.hidden = true;
+    trigger.setAttribute("aria-expanded", "false");
+    document.removeEventListener("pointerdown", onDocument, true);
+    document.removeEventListener("keydown", onDocument, true);
+  }
+
+  trigger.addEventListener("click", () => {
+    if (!menu.hidden) {
+      close();
+      return;
+    }
+    menu.hidden = false;
+    trigger.setAttribute("aria-expanded", "true");
+    document.addEventListener("pointerdown", onDocument, true);
+    document.addEventListener("keydown", onDocument, true);
+  });
+
+  // A download navigates, so the menu is dismissed on its way out.
+  menu.addEventListener("click", (event) => {
+    if (event.target.closest("a")) close();
+  });
+
+  return wrap;
 }
 
 function tabBar(dealId, active) {
@@ -721,7 +799,29 @@ function renderTab(tab, panel) {
   if (tab === "documents") renderDocuments(panel);
   else if (tab === "review") renderReview(panel);
   else if (tab === "underwriting") renderUnderwriting(panel);
+  else if (tab === "collect") renderCollect(panel, collectContext());
   else renderAnalysis(panel);
+}
+
+/** What the analysis panels need: the deal, its model, and the current run. */
+function analysisContext() {
+  const deal = state.detail.deal;
+  return {
+    dealId: deal.id,
+    currency: deal.currency || "AED",
+    depth: deal.depth,
+    modelId: deal.modelId,
+    result: state.result,
+  };
+}
+
+function collectContext() {
+  const deal = state.detail.deal;
+  return {
+    dealId: deal.id,
+    assetType: deal.assetType,
+    documents: state.detail.documents || [],
+  };
 }
 
 // ---------------------------------------------------------------- documents --
@@ -2008,6 +2108,9 @@ function renderUnderwriting(panel) {
 
   if (result.projection) panel.append(projectionTable(result.projection));
   if (result.benchmarks && result.benchmarks.length) panel.append(benchmarkPanel(result));
+
+  panel.append(solverSection(analysisContext()));
+  panel.append(sensitivitySection(analysisContext()));
 
   panel.append(assumptionsPanel(result, panel));
 }

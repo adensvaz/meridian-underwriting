@@ -1,0 +1,363 @@
+/* ==========================================================================
+   DATUM — features.css
+   The sensitivity grid, the loan sizing solver, the export menu and the
+   broker's collection screen.
+
+   Load order: tokens → layout → components → extraction → features → print
+   Logical properties throughout. No drop shadows on cards; the export menu is
+   a true overlay and is the only thing here that takes one. One accent hue.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. EXPORT MENU
+   A real overlay, so it earns the one permitted shadow. Nothing else does.
+   -------------------------------------------------------------------------- */
+
+.exp { position: relative; display: inline-flex; }
+
+.exp__menu {
+  position: absolute;
+  inset-block-start: calc(100% + var(--s-6));
+  inset-inline-end: 0;
+  z-index: 20;
+  min-inline-size: 260px;
+  padding: var(--s-4);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.exp__menu[hidden] { display: none; }
+
+.exp__item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-16);
+  padding: var(--s-8) var(--s-12);
+  border-radius: var(--r-sm);
+  color: var(--text-1);
+  font-size: var(--fs-body);
+  transition: background-color var(--t-state) var(--e-precise);
+}
+
+.exp__item:hover { background: var(--bg-400); }
+.exp__note { color: var(--text-4); flex: none; }
+.exp__empty { padding: var(--s-12); max-inline-size: 34ch; }
+
+/* --------------------------------------------------------------------------
+   2. SENSITIVITY MATRIX
+   A dense table first and a diagram second. Shading carries the threshold
+   breach; the base case is marked with the accent and nothing else on the
+   screen uses it.
+   -------------------------------------------------------------------------- */
+
+.sens-wrap { max-block-size: none; }
+
+.sens th,
+.sens td { min-inline-size: 96px; }
+
+/* The corner names both axes, so it is the one cell allowed to be two lines
+   tall and to break the shared row height. */
+.sens th.sens__corner {
+  min-inline-size: 172px;
+  block-size: auto;
+  padding-block: var(--s-6);
+  vertical-align: middle;
+}
+
+.sens th.sens__corner span { display: block; }
+
+/* Axis ticks are figures, so they drop the tracked uppercase label treatment
+   the generic table head carries — tracking a column of numbers destroys the
+   rigid rectangle it has to be. */
+.sens thead th.sens__head,
+.sens tbody th.sens__head {
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  line-height: var(--lh-micro);
+  font-weight: var(--fw-micro);
+  letter-spacing: .04em;
+  text-transform: none;
+  color: var(--text-2);
+}
+
+.sens tbody th.sens__head--base,
+.sens thead th.sens__head--base {
+  color: var(--text-1);
+  box-shadow: inset 0 -1px 0 var(--accent);
+}
+
+.sens__cell { position: relative; color: var(--text-1); }
+
+/* A breached cell. Oxide tint, not a red badge — the table still has to read
+   as one system when half of it is shaded. The hover pair is not decoration:
+   the generic row-hover background would otherwise erase the shading exactly
+   when the reader points at the cell they are asking about. */
+.sens__cell--breach,
+.sens tbody tr:hover > .sens__cell--breach {
+  background: var(--neg-tint);
+  color: var(--neg);
+}
+
+/* The base case. An inset ring rather than a border, so the 1px grid rhythm
+   does not shift by a pixel where the marker lands. */
+.sens__cell--base,
+.sens tbody tr:hover > .sens__cell--base {
+  box-shadow: inset 0 0 0 1px var(--accent);
+  background: var(--accent-tint);
+  color: var(--text-1);
+}
+
+.sens__cell--base.sens__cell--breach,
+.sens tbody tr:hover > .sens__cell--base.sens__cell--breach {
+  background: color-mix(in oklab, var(--neg-tint) 70%, var(--accent-tint));
+}
+
+.sens__cell--base::after {
+  content: "BASE";
+  position: absolute;
+  inset-block-start: 2px;
+  inset-inline-start: var(--s-8);
+  font-family: var(--font-mono);
+  font-size: 8px;
+  line-height: 1;
+  letter-spacing: .10em;
+  color: var(--accent);
+}
+
+.sens__legend {
+  margin-block-start: var(--s-12);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  max-inline-size: 92ch;
+}
+
+/* --------------------------------------------------------------------------
+   3. ONE-DIMENSIONAL SENSITIVITY — the cheque strip
+   A Dubai tenancy is paid in post-dated cheques handed over at signing. This
+   is a row of readings, not a degenerate matrix, and it is drawn as one.
+   -------------------------------------------------------------------------- */
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--s-12);
+}
+
+.tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-8);
+  padding: var(--s-16);
+  background: var(--bg-200);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-md);
+  box-shadow: var(--glint);
+  min-inline-size: 0;
+}
+
+.tile__k {
+  font-size: var(--fs-label);
+  line-height: var(--lh-label);
+  font-weight: var(--fw-label);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.tile__v {
+  font-family: var(--font-display);
+  font-size: 26px;
+  line-height: 1.15;
+  font-weight: 300;
+  letter-spacing: -0.020em;
+  color: var(--text-1);
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+.tile__n { color: var(--accent); }
+
+.tile--base {
+  border-color: color-mix(in oklab, var(--accent) 40%, var(--hairline));
+  background: var(--accent-tint);
+}
+
+.tile--breach .tile__v { color: var(--neg); }
+.tile--breach { border-color: color-mix(in oklab, var(--neg) 30%, var(--hairline)); }
+
+/* --------------------------------------------------------------------------
+   4. LOAN SIZING SOLVER
+   The verdict is the headline. "DSCR-bound at 1.25x" is the insight; the
+   amount is the evidence, and it sits underneath.
+   -------------------------------------------------------------------------- */
+
+.solve__verdict {
+  padding-inline-start: var(--flag-gutter);
+  border-inline-start: 2px solid var(--accent);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-6);
+}
+
+.solve__verdict--hard { border-inline-start-color: var(--neg); }
+.solve__verdict--hard .solve__label { color: var(--neg); }
+
+.solve__label { color: var(--text-1); }
+.solve__detail { color: var(--text-2); margin-block-start: var(--s-2); }
+
+.solve__band {
+  margin-block-start: var(--s-24);
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--s-12);
+}
+
+.solve__stat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-6);
+  padding-block-start: var(--s-12);
+  border-block-start: 1px solid var(--hairline);
+  min-inline-size: 0;
+}
+
+.solve__stat--hero { border-block-start-color: var(--hairline-strong); }
+
+.solve__fig {
+  font-family: var(--font-display);
+  font-size: 28px;
+  line-height: 1.15;
+  font-weight: 300;
+  letter-spacing: -0.020em;
+  color: var(--text-1);
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+.solve__stat--hero .solve__fig { font-size: 40px; line-height: 1.05; letter-spacing: -0.025em; }
+
+@container panel (max-width: 900px) {
+  .solve__band { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@container panel (max-width: 520px) {
+  .solve__band { grid-template-columns: minmax(0, 1fr); }
+}
+
+@supports not (container-type: inline-size) {
+  @media (max-width: 1000px) { .solve__band { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+}
+
+/* --------------------------------------------------------------------------
+   5. COLLECTION — the one-time link
+   The URL is the whole point of the panel, so it gets the width.
+   -------------------------------------------------------------------------- */
+
+.token__row {
+  margin-block-start: var(--s-8);
+  display: flex;
+  align-items: center;
+  gap: var(--s-8);
+  flex-wrap: wrap;
+}
+
+.token__field {
+  flex: 1 1 420px;
+  min-inline-size: 0;
+  font-family: var(--font-mono);
+  font-size: var(--fs-dense);
+  letter-spacing: 0;
+  background: var(--bg-300);
+  border-color: var(--hairline-strong);
+  color: var(--text-1);
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+.token__field:read-only { cursor: text; }
+
+/* --------------------------------------------------------------------------
+   6. COLLECTION — checklist preview
+   -------------------------------------------------------------------------- */
+
+.check-list {
+  margin-block-start: var(--s-12);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--s-12);
+}
+
+.check-item {
+  padding: var(--s-12);
+  background: var(--bg-200);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-md);
+  box-shadow: var(--glint);
+  min-inline-size: 0;
+}
+
+.check-item__label { color: var(--text-1); font-size: var(--fs-body); }
+.check-item__hint { margin-block-start: var(--s-6); }
+
+/* --------------------------------------------------------------------------
+   7. COLLECTION — coverage by document type
+   Not a completion state. The visual weight says "arrived", never "complete".
+   -------------------------------------------------------------------------- */
+
+.cov {
+  padding: var(--s-12) var(--s-16);
+  background: var(--bg-200);
+  border: 1px solid var(--hairline);
+  border-inline-start: 2px solid var(--hairline-strong);
+  border-radius: var(--r-md);
+  box-shadow: var(--glint);
+}
+
+.cov--has { border-inline-start-color: var(--pos); }
+
+.cov__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-16);
+  flex-wrap: wrap;
+}
+
+.cov__kind { color: var(--text-2); }
+
+.cov__lines {
+  margin-block-start: var(--s-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.cov__files {
+  margin-block-start: var(--s-8);
+  padding-block-start: var(--s-8);
+  border-block-start: 1px solid var(--hairline);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-8);
+}
+
+.cov__file { color: var(--text-3); }
+
+/* --------------------------------------------------------------------------
+   8. PRINT
+   The solver verdict and the grid belong in an IC pack. The pickers do not —
+   .no-print already removes those.
+   -------------------------------------------------------------------------- */
+
+@media print {
+  .exp { display: none; }
+  .tile,
+  .cov,
+  .check-item { box-shadow: none; }
+  .sens__cell--breach { background: none; }
+  .sens__cell--base { box-shadow: none; background: none; }
+}

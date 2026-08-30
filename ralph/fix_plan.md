@@ -121,7 +121,7 @@ for first.
       underwriting request, and must not push confidential figures into a
       channel wider than the deal's owner by default.
 
-- [ ] Front end for all of the above: sensitivity grid UI with threshold
+- [x] Front end for all of the above: sensitivity grid UI with threshold
       shading, a solver panel on the Underwriting tab, an export menu, an
       invite/members screen, and an accept-invite page.
 - [ ] Deal comparison — put two or three deals side by side on the metrics that
@@ -157,7 +157,7 @@ underwriting logic as data.
       broker sends to a buyer with no account. Checklist is the real UAE lender
       list — Emirates ID, salary certificate, 6 months of statements, liability
       letters — filtered by employment type.
-- [ ] Broker UI for collection links: create, copy, see what has arrived, revoke.
+- [x] Broker UI for collection links: create, copy, see what has arrived, revoke.
       The API and the buyer page exist; the broker-side screen does not.
 - [ ] Show collection progress on the deal — which checklist items have landed
       and which are still outstanding. Right now the broker sees documents but
