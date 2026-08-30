@@ -332,6 +332,52 @@ CREATE TABLE IF NOT EXISTS narratives (
 );
 CREATE INDEX IF NOT EXISTS idx_narratives_run ON narratives(run_id);
 
+-- ------------------------------------------------- buyer document collection --
+
+-- A mortgage broker cannot underwrite until the buyer has handed over a stack
+-- of KYC and income documents, and chasing those documents by email is the
+-- single most tedious part of the job. A document request is a tokenised,
+-- expiring, UPLOAD-ONLY link the broker sends to a buyer who has no account.
+--
+-- The security model is deliberately narrow. Holding the token lets you do
+-- exactly two things: see which documents are being asked for, and add files.
+-- It never permits reading a file back, listing what was already uploaded,
+-- seeing any figure, or learning anything about the deal beyond a reference the
+-- broker chose. Only the SHA-256 of the token is stored, so a database leak
+-- does not yield working links.
+CREATE TABLE IF NOT EXISTS document_requests (
+  id             TEXT PRIMARY KEY,
+  deal_id        TEXT NOT NULL REFERENCES deals(id) ON DELETE CASCADE,
+  org_id         TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  owner_id       TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  token_hash     TEXT NOT NULL UNIQUE,
+  -- Shown to the buyer so the link does not look like a phishing attempt.
+  recipient_name TEXT,
+  reference      TEXT,
+  message        TEXT,
+  -- JSON array of required document keys, from the checklist in collect.ts.
+  checklist      TEXT NOT NULL,
+  status         TEXT NOT NULL DEFAULT 'open',   -- open | complete | revoked | expired
+  expires_at     TEXT NOT NULL,
+  created_at     TEXT NOT NULL,
+  last_upload_at TEXT,
+  upload_count   INTEGER NOT NULL DEFAULT 0,
+  revoked_at     TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_docreq_deal ON document_requests(deal_id);
+CREATE INDEX IF NOT EXISTS idx_docreq_org ON document_requests(org_id, created_at DESC);
+
+-- Rate limiting for the public upload endpoint, keyed by IP. Without this the
+-- token space is brute-forceable and the upload route is a free disk-filling
+-- primitive for anyone who finds the URL.
+CREATE TABLE IF NOT EXISTS collect_attempts (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  ip         TEXT NOT NULL,
+  ok         INTEGER NOT NULL,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_collect_ip ON collect_attempts(ip, created_at);
+
 CREATE TABLE IF NOT EXISTS schema_meta (
   key   TEXT PRIMARY KEY,
   value TEXT NOT NULL

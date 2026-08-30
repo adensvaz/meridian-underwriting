@@ -14,6 +14,7 @@ import type { ModelDefinition } from "../../lib/engine/types.ts";
 import { dubaiResidentialQuick } from "./dubai-residential-quick.ts";
 import { dubaiResidentialFull } from "./dubai-residential-full.ts";
 import { dubaiCommercialFull } from "./dubai-commercial-full.ts";
+import { uaeMortgageAffordability } from "./uae-mortgage-affordability.ts";
 import { usMultifamilyFull } from "./us-multifamily-full.ts";
 
 export { dubaiResidentialQuick } from "./dubai-residential-quick.ts";
@@ -31,6 +32,7 @@ export const SYSTEM_MODELS: ModelDefinition[] = [
   dubaiResidentialFull,
   dubaiCommercialFull,
   usMultifamilyFull,
+  uaeMortgageAffordability,
 ];
 
 /** Lookup by model key. Returns undefined for an unknown key. */

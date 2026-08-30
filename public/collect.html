@@ -1,0 +1,35 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Upload your documents</title>
+<link rel="stylesheet" href="/css/tokens.css">
+<link rel="stylesheet" href="/css/layout.css">
+<link rel="stylesheet" href="/css/components.css">
+<link rel="stylesheet" href="/css/collect.css">
+
+<main class="collect" id="collect">
+  <div class="collect__plate" id="plate">
+    <p class="label collect__eyebrow" id="firm">Loading</p>
+    <h1 class="collect__title" id="title">Your documents</h1>
+    <p class="collect__lede" id="lede"></p>
+
+    <div class="collect__note" id="message" hidden></div>
+
+    <ol class="checklist" id="checklist"></ol>
+
+    <div class="collect__foot">
+      <p class="caption" id="expiry"></p>
+      <p class="caption collect__privacy">
+        Your files go directly to the firm that asked for them. Nobody else can
+        open this link to read them back.
+      </p>
+    </div>
+  </div>
+
+  <div class="collect__plate collect__plate--state" id="state" hidden>
+    <h1 class="collect__title" id="stateTitle"></h1>
+    <p class="collect__lede" id="stateBody"></p>
+  </div>
+</main>
+
+<script type="module" src="/js/collect.js"></script>

@@ -36,6 +36,10 @@ import type { ModelDefinition } from "../lib/engine/types.ts";
 import { previewUnderwrite, underwriteDeal } from "../lib/underwrite.ts";
 import { generateNarrative } from "../lib/ai/narrative.ts";
 import { extractionAvailable, removeStoredFile, runExtraction, storeAndParse } from "../lib/pipeline.ts";
+import { registerExportRoutes } from "./export.ts";
+import { registerAnalysisRoutes } from "./analysis.ts";
+import { registerAdminRoutes } from "./admin.ts";
+import { registerCollectRoutes } from "./collect.ts";
 
 export const router = new Router();
 
@@ -645,6 +649,17 @@ router.post("/api/runs/:id/narrative", async (ctx) => {
   repo.audit(ctx.user, "narrative.generated", "run", run.id, { engine: narrative.engine }, ctx.ip);
   json(ctx.res, 200, { id: narrativeId, ...narrative });
 });
+
+// ------------------------------------------------------ feature route modules --
+//
+// Each module registers its own routes rather than editing this file, which is
+// what let three of them be built in parallel without collisions. They all
+// receive the same Router and are bound by the same auth and CSRF defaults.
+
+registerExportRoutes(router);   // Excel and CSV export
+registerAnalysisRoutes(router); // sensitivity grids and the loan sizing solver
+registerAdminRoutes(router);    // invites, password reset, outbound webhooks
+registerCollectRoutes(router);  // buyer document collection links
 
 // ------------------------------------------------------------------- shapers --
 

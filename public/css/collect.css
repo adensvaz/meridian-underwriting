@@ -1,0 +1,204 @@
+/* The buyer's upload page.
+ *
+ * Everywhere else in this product the audience is a professional at a desk.
+ * Here it is a stressed person on a phone who was sent a link. So this is the
+ * one screen that widens the type, drops the density, and uses plain language
+ * — while staying recognisably the same instrument, because the buyer is
+ * looking at their broker's brand and it should not feel like a form mill.
+ */
+
+.collect {
+  min-block-size: 100dvh;
+  display: grid;
+  place-items: start center;
+  padding: var(--s-32) var(--s-16) var(--s-56);
+  background: var(--bg-100);
+}
+
+.collect__plate {
+  inline-size: min(100%, 560px);
+  background: var(--bg-200);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-md);
+  box-shadow: inset 0 1px 0 var(--hairline-glint);
+  padding: var(--s-32) var(--s-24) var(--s-24);
+}
+
+.collect__plate--state {
+  text-align: center;
+  padding-block: var(--s-56);
+}
+
+.collect__eyebrow {
+  color: var(--text-2);
+  margin: 0 0 var(--s-12);
+}
+
+.collect__title {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: var(--text-1);
+  margin: 0 0 var(--s-12);
+}
+
+/* Wider measure and taller leading than the rest of the app: this is the only
+   place a non-specialist reads a paragraph. */
+.collect__lede {
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--text-2);
+  margin: 0 0 var(--s-20);
+  max-inline-size: 52ch;
+}
+
+.collect__note {
+  border-inline-start: 2px solid var(--accent);
+  background: var(--accent-tint);
+  padding: var(--s-12) var(--s-16);
+  border-radius: var(--r-sm);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text-1);
+  margin-block-end: var(--s-24);
+}
+
+/* ---------------------------------------------------------------- checklist */
+
+.checklist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-block-start: 1px solid var(--hairline);
+}
+
+.checklist__item {
+  padding: var(--s-20) 0 var(--s-16);
+  border-block-end: 1px solid var(--hairline);
+  position: relative;
+}
+
+/* A completed row recedes rather than celebrating. The buyer needs to see what
+   is LEFT, so done items get quieter, not louder. */
+.checklist__item[data-state="done"] .checklist__label { color: var(--text-2); }
+.checklist__item[data-state="done"] .checklist__hint { display: none; }
+.checklist__item[data-state="done"] { background: linear-gradient(90deg, var(--pos-tint), transparent 40%); }
+
+.checklist__head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-8);
+  margin-block-end: var(--s-4);
+}
+
+.checklist__label {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-1);
+}
+
+.checklist__optional {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  border: 1px solid var(--hairline-strong);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+.checklist__tick {
+  display: inline-flex;
+  color: var(--pos);
+  margin-inline-start: auto;
+}
+
+.checklist__hint {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text-3);
+  margin: 0 0 var(--s-12);
+  max-inline-size: 48ch;
+}
+
+/* The file input is driven by its label; hiding it visually while keeping it
+   focusable preserves keyboard and screen-reader access. */
+.checklist__input {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.checklist__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  /* Comfortably past the 44px touch target minimum — this page is used on a
+     phone far more than at a desk. */
+  min-block-size: 40px;
+  padding-inline: var(--s-16);
+}
+
+.checklist__input:focus-visible + .checklist__btn,
+.checklist__btn:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.checklist__btn[aria-disabled="true"] {
+  color: var(--text-4);
+  pointer-events: none;
+}
+
+.checklist__status {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-3);
+  margin: var(--s-8) 0 0;
+  word-break: break-word;
+}
+
+.checklist__item[data-state="done"] .checklist__status { color: var(--pos); }
+.checklist__item[data-state="error"] .checklist__status { color: var(--neg); }
+
+.checklist__warn {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--cau);
+  margin: var(--s-8) 0 0;
+  border-inline-start: 2px solid var(--cau);
+  padding-inline-start: var(--s-8);
+}
+
+/* -------------------------------------------------------------------- foot */
+
+.collect__foot {
+  margin-block-start: var(--s-24);
+  display: grid;
+  gap: var(--s-8);
+}
+
+.collect__privacy {
+  color: var(--text-3);
+  max-inline-size: 48ch;
+}
+
+@media (max-width: 520px) {
+  .collect { padding-inline: var(--s-12); }
+  .collect__plate { padding: var(--s-24) var(--s-16) var(--s-16); }
+  .collect__title { font-size: 22px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .checklist__item { transition: none; }
+}

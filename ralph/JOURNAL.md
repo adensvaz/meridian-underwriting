@@ -50,3 +50,48 @@ working software from the outside:
 Next: work the backlog in `ralph/fix_plan.md`, top item first. The extraction
 accuracy harness is the top item and should stay there — no accuracy claim can
 be made until it exists.
+
+---
+
+2026-08-30 — Round 2: Excel/CSV export, sensitivity grid, loan sizing solver,
+invite flow, password reset, outbound webhooks. Built by three parallel workers
+on non-overlapping files, each registering its own routes so none had to edit
+`src/routes/index.ts`.
+
+All three workers were killed mid-verification by a session limit, so their work
+was verified independently afterwards rather than taken on trust. It held, with
+one real defect found: the export filename sanitiser stripped only the first
+run of leading dots, so `../../etc/passwd` became `.. etc passwd`. Low severity —
+it is a Content-Disposition header, not a filesystem path — but fixed by
+dropping any dot-only token. CRLF injection was already blocked.
+
+2026-08-30 — Round 3: mortgage broker mode.
+
+The product now serves two jobs. The engine needed no changes for the second,
+which is the payoff of treating underwriting logic as data rather than code — a
+mortgage affordability assessment is a completely different financial question
+and it shipped as one new JSON model.
+
+- `uae-mortgage-affordability`: maximum borrowing as the lower of an income
+  ceiling (50% debt burden ratio, stress-tested, over the age-capped term) and a
+  deposit ceiling (Central Bank LTV ladder), reporting which one binds. Credit
+  card limits are charged at 5% of the LIMIT, which is the actual UAE rule and
+  the thing that most often surprises a buyer. Plus total cash to complete.
+  Verified: AED 45k/month, AED 2.2m first home, expat resident → deposit-bound
+  at AED 1,760,000 (80% LTV), DBR 21.7%, cash to complete AED 609,070.
+- Buyer document collection: a tokenised, expiring, UPLOAD-ONLY link sent to a
+  buyer who has no account. Verified end to end — the buyer view returns no
+  numbers at all even when the case carries real figures, an anonymous fetch of
+  an uploaded file is refused 401, and the token cannot be recovered from the
+  broker's own list once issued.
+
+One self-check had to be corrected rather than the code: it required every model
+to bind rent-roll derivations, which is meaningless for a mortgage model that
+assesses a buyer's income rather than a property's tenants.
+
+Gate: `npm run check` 19/19 · `npm run smoke` 28/28 · 137 unit tests · five
+shipped models validate.
+
+Backlog: 28 open, 12 closed. The loop can continue from here — `./ralph/loop.sh`
+now refuses to start on a red build, verifies after every iteration, commits each
+good one, and stops after two iterations that make no progress.

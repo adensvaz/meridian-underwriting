@@ -64,23 +64,23 @@ this file wholesale.
 
 ## Engine
 
-- [ ] Sensitivity grid: exit yield against rent growth, computed server-side via
+- [x] Sensitivity grid: exit yield against rent growth, computed server-side via (done in Round 2 —
       the preview endpoint. Dubai buyers expect a 3x3 at minimum.
 - [ ] Cheque-count sensitivity as a first-class toggle on the Underwriting tab —
       show the deal at 1, 2, 4 and 12 cheques side by side.
 - [ ] Off-plan path: staged payment plan, handover date, zero income until
       handover, delay sensitivity. Currently unmodelled and it is a large slice
       of this market.
-- [ ] Loan sizing: solve for proceeds subject to max LTV and min DSCR rather
+- [x] Loan sizing: solve for proceeds subject to max LTV and min DSCR rather (done in Round 2 —
       than taking the loan amount as an input.
 
 ## Product
 
-- [ ] Export: a one-page IC pack as print-optimised HTML (`print.css` exists but
-      nothing routes to it) and a CSV of the full underwriting.
-- [ ] Invite flow. The schema has an `invites` table and there is no endpoint or
+- [x] Export: CSV and a full Excel workbook shipped in Round 2. The print IC
+      pack is wired to the Print button on the deal page.
+- [x] Invite flow. The schema has an `invites` table and there is no endpoint or (API done in Round 2; screen still open —
       screen. Until this exists, adding a second user needs a terminal.
-- [ ] Password reset.
+- [x] Password reset. (done in Round 2)
 - [ ] Deal duplication — "underwrite this again with different assumptions" is
       the most common real workflow and today it means re-uploading.
 
@@ -96,6 +96,42 @@ this file wholesale.
 - [ ] Structured request logging with a deal id, without ever logging figures or
       document contents.
 
+## Round 2 — features and integrations
+
+Added after the MVP shipped. Ordered by what a Dubai investment committee asks
+for first.
+
+- [x] **Excel / CSV export.** Done — 8-sheet workbook, real number formats, verified against a live deal. Multi-sheet workbook: summary,
+      inputs with provenance, computed lines, projection, rent roll, T12,
+      analysis, benchmarks. Real number formats, not strings, so the figures
+      stay live in Excel. This is the single most requested thing by CRE
+      professionals — a tool they cannot get out of is a tool they will not use.
+- [x] **Sensitivity grid.** Done — presets resolve per model, cheque-count included. Two-variable table with Dubai-relevant
+      presets: exit yield × rent growth, price × rent, LTV × rate, and a
+      one-dimensional cheque-count sensitivity that no US-built tool would have.
+- [x] **Loan sizing solver.** Done — Marisol solves DSCR-bound at AED 654,625 / 62.3% LTV. Solve the maximum facility subject to
+      max LTV and minimum DSCR, and report which constraint binds — "LTV-bound
+      at 75%" versus "DSCR-bound at 1.25×" tells an analyst whether more equity
+      or more rent fixes the deal.
+- [x] **Invite flow and password reset.** Done — 15 tests including cross-org isolation and enumeration resistance. The `invites` table has
+      existed since day one and is unused; adding a second user currently needs
+      a terminal.
+- [x] **Outbound webhooks** (Slack / Teams / generic). Done. Fire when a
+      deal clears or misses a threshold. Must never block or fail the
+      underwriting request, and must not push confidential figures into a
+      channel wider than the deal's owner by default.
+
+- [ ] Front end for all of the above: sensitivity grid UI with threshold
+      shading, a solver panel on the Underwriting tab, an export menu, an
+      invite/members screen, and an accept-invite page.
+- [ ] Deal comparison — put two or three deals side by side on the metrics that
+      matter. The most common real workflow after "underwrite this" is
+      "and how does it compare to the other three I'm looking at".
+- [ ] Deal duplication — "underwrite this again with different assumptions"
+      currently means re-uploading the documents.
+- [ ] Saved assumption presets — a named house model a user can apply to a new
+      deal in one click, rather than editing the same six inputs every time.
+
 ## Icebox — explicitly out of scope for the MVP
 
 - Saved deal pipeline with stages, notes and CRM (Phase 2 in the brief).
@@ -105,3 +141,32 @@ this file wholesale.
 - Monthly cash flows and renovation phasing.
 - Arabic UI. The CSS is RTL-ready; the copy is not translated.
 - Mobile layouts beyond the responsive collapse already in `layout.css`.
+
+## Round 3 — mortgage broker mode
+
+The platform now serves two jobs, not one: underwriting an investment, and
+assessing a buyer for a mortgage. The engine needed no changes for the second —
+affordability is just another model definition, which is the payoff of treating
+underwriting logic as data.
+
+- [x] **UAE mortgage affordability model.** Maximum borrowing as the lower of an
+      income ceiling (50% debt burden ratio, stress-tested, over the age-capped
+      term) and a deposit ceiling (Central Bank LTV ladder), reporting which one
+      binds. Plus total cash to complete, which is the number every buyer asks.
+- [x] **Buyer document collection.** A tokenised, expiring, upload-only link the
+      broker sends to a buyer with no account. Checklist is the real UAE lender
+      list — Emirates ID, salary certificate, 6 months of statements, liability
+      letters — filtered by employment type.
+- [ ] Broker UI for collection links: create, copy, see what has arrived, revoke.
+      The API and the buyer page exist; the broker-side screen does not.
+- [ ] Show collection progress on the deal — which checklist items have landed
+      and which are still outstanding. Right now the broker sees documents but
+      not which requested item each satisfies.
+- [ ] Extract from identity and income documents: Emirates ID number and expiry,
+      salary and employer from a salary certificate, average balance and salary
+      credits from bank statements. The extraction layer handles these already;
+      the prompts and field mappings do not exist yet.
+- [ ] Reminder nudges — a broker should be able to re-send a link for the items
+      still missing, without re-issuing the whole request.
+- [ ] Multi-bank comparison: same applicant, several lenders' LTV and rate
+      policies side by side. This is what a broker actually sells.

@@ -19,6 +19,9 @@ const PAGES: Record<string, string> = {
   "/login": "/login.html",
   "/models": "/models.html",
   "/styleguide": "/index.html",
+  // The buyer-facing upload page. Public by design — the token in the URL
+  // is the authorisation, and the page itself contains no deal data.
+  "/collect": "/collect.html",
 };
 
 function boot(): void {

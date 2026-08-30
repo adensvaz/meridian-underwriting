@@ -362,9 +362,15 @@ await checkAsync("Rent-roll and T12 derivations reach every shipped model", asyn
         }
       }
     }
-    // And every model must actually bind rent and area, or an uploaded rent
-    // roll cannot move its numbers at all. Rent may come through either the
-    // headline total or the in-place total — both are canonical.
+    // Every PROPERTY model must bind rent and area, or an uploaded rent roll
+    // cannot move its numbers at all. Rent may come through either the headline
+    // total or the in-place total — both are canonical.
+    //
+    // Mortgage affordability models are exempt: they assess a buyer's income
+    // and liabilities, not a property's tenants, so they have no rent roll to
+    // bind to. Requiring it would be requiring a field that makes no sense.
+    if (model.assetType === "mortgage") continue;
+
     const bound = new Set(model.inputs.map((i) => i.derivedFrom ?? i.key));
     if (!bound.has("annual_rent") && !bound.has("in_place_rent_total")) {
       unbound.push(`${model.key} binds nothing to the rent-roll rent total`);
