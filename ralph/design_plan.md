@@ -146,7 +146,7 @@ who most needs to understand it. Every input and every summary line on the
 mortgage model now carries plain-English `help` text, and the UI renders none of
 it.
 
-- [ ] **Surface `help` as a tooltip on every metric and field label.** The data
+- [x] **Surface `help` as a tooltip on every metric and field label.** The data
       is already there — `ComputedValue.help` and `InputDef.help` come through
       the API on every line. Attach it to the KPI tile eyebrow, the computed-line
       rows, the review-screen field labels and the assumptions panel.
@@ -173,3 +173,20 @@ it.
 - [ ] **Group labels need the same treatment.** "Borrowing capacity",
       "Cash to complete", "Affordability" head the computed sections and are
       not self-explanatory to a first-time reader.
+
+## Found while working — round 2
+
+- [ ] **`ResolvedInput` dropped `help` on the way to the client, and nothing
+      caught it.** The model definition carried `InputDef.help`; the run result
+      did not. So the Review ledger and the assumptions panel could explain a
+      *result* and not the *assumption* that produced it. Fixed with one line in
+      `src/lib/engine/model.ts`, but the class of bug is unguarded: `LineDef`
+      and `InputDef` are copied field-by-field into their resolved counterparts
+      and any field can be forgotten in silence. Worth a `check` that asserts
+      every declared presentation field survives a run.
+- [ ] **Nothing tests the client.** `tooltip.js` is the first piece of client
+      code with real branching — open/close state, a pin flag, viewport
+      clamping, RTL, flip-above — and `npm test` cannot see any of it. The gate
+      passed with 142 tests and would have passed identically had the popover
+      never opened once. Either give the client a DOM-level harness or stop
+      treating the browser pass as optional.

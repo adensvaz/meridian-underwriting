@@ -356,3 +356,109 @@ silent failure is not yet doing its job.
 
 NOT writing DESIGN COMPLETE. Four items are open and the motion design does not
 currently run.
+
+---
+
+2026-08-30 — Round 2, item 1. **Surface `help` on every metric and field label.**
+
+**What I saw.** I could not photograph the Underwriting tab: the session is
+signed out and I will not type a password into a form to get back in. So I
+looked at the two places the same components live and are reachable without a
+session — the styleguide's KPI band (`.kpi__label`) and its extracted-field
+ledger (`.field__label`) — and at the `computedLines` / `kpiBand` / `fieldRow`
+source that builds the real thing.
+
+The three questions:
+
+- *What is the subject?* On the underwriting screen it is the hero figure, and
+  round 1 already settled that. The failure this item names is not composition
+  at all. It is that every supporting label is a term of art — "Debt burden
+  ratio", "Binding constraint", "Loan to value achieved" — aimed at the one
+  reader least able to decode it. The screen is well composed and mute.
+- *Where is the light coming from?* Unchanged. Above. This item must not touch
+  it, and does not.
+- *What would I remove?* Nothing. This is the rare item where the honest answer
+  to the third question is "the silence", and the discipline is to break it
+  without spending a single pixel at rest.
+
+**What I changed.** A new `public/js/tooltip.js`, one implementation for every
+screen, plus §16 of `components.css` and three surgical call sites in `app.js`
+(`kpiBand`, `computedLines`, `fieldRow` — the last serving both the Review
+ledger and the assumptions panel).
+
+**What I did not add.** At rest the page gains nothing. A label with no `help`
+renders exactly the element it rendered yesterday: no button, no underline, no
+listener. A label with `help` becomes a `<button>` carrying the same text and a
+1px dotted underline at 45% of whatever colour the label already is — so it
+works on a `--text-3` eyebrow and a `--text-1` line without a second rule, and
+inverts with the theme for nothing. No icon, no question-mark circle, no badge.
+One popover exists in the DOM, invisible and `pointer-events: none` until asked
+for. In the 375px captures the affordance is visible on PURCHASE PRICE,
+CONTRACTED RENT and SERVICE CHARGE and absent on NET LETTABLE AREA, VACANCY
+ALLOWANCE, OPERATING EXPENSES and GROUND RENT, which is the restraint working:
+the page tells you which labels have more to say.
+
+**The CSP.** `style-src 'self'` blocks this app's `element.style.setProperty()`
+writes silently — the known open defect, and it is why the styleguide's needles
+and count-ups do not run. I did not weaken it. The popover's position is written
+through a constructed stylesheet (`new CSSStyleSheet()` + `replaceSync` +
+`adoptedStyleSheets`), which CSP does not police because there is no inline
+source to check. That is verified, not assumed: after 50 open/close cycles from
+the page module the popover's `style` attribute is still `null` and its measured
+rect is at the computed anchor rather than the stylesheet's 0,0 default — which
+can only happen if the rule applied. No console message names `tooltip.js`, the
+popover or the rule text.
+
+**Verified in the browser** (styleguide, the only surface reachable signed out):
+
+- Hover opens, hover-out closes; `pointerType === "touch"` on `pointerenter` is
+  a deliberate no-op so a tap does not open-then-toggle-shut.
+- Tap opens, second tap closes.
+- Focus opens and sets `aria-describedby`; blur closes and removes it.
+- Escape closes, removes `aria-describedby` and returns focus to the trigger.
+- Outside `pointerdown` closes a pinned popover.
+- A reader's scroll dismisses; the browser's own scroll-into-view does not.
+  Sequential focus navigation scrolls an off-screen trigger into view and *then*
+  fires focus, so an unconditional scroll-close meant a keyboard reader could
+  never reach an explanation below the fold — it opened and vanished in the same
+  frame. Caught late and fixed by comparing the trigger's rect against where it
+  sat when the popover was placed, which distinguishes the browser's scroll from
+  the reader's without any timing hack. All three cases asserted.
+- The trigger is a real `<button type="button">`, present in the tab order,
+  described by a `role="tooltip"` popover. No `title` attribute anywhere.
+- At 375×812 all ten triggers keep the popover fully inside the viewport, top,
+  bottom and both inline edges, flipping above the label when the page runs out
+  below. Same sweep passes under `dir="rtl"`, mirrored to the correct edge.
+- No horizontal document overflow at any width.
+- Dark and light both captured at 375; `--bg-300` plate on a `--hairline-strong`
+  hairline reads correctly in each.
+- Inside `td.w-name` the trigger inherits the cell's 13px dense type, colour and
+  start alignment, and the row height is unchanged at 32px. The dense financial
+  rows the prompt protects are untouched.
+- 90ms fade on `--e-precise`, nothing else. `prefers-reduced-motion` and `print`
+  rules present in the parsed sheet; on paper the underline and popover are gone.
+
+**One src/ change, and I want it on the record.** The premise that
+`InputDef.help` already reached the client was wrong. `ComputedValue.help` did;
+`ResolvedInput` dropped it. Without fixing that, the Review ledger and the
+assumptions panel could explain a *result* and not the *assumption* that
+produced it — half the item. One field on the interface, one line in
+`runModel`. `runModel` now returns help on 8/8 mortgage KPIs, 20/30 computed
+lines and 25/25 inputs.
+
+**What I could not verify.** The Underwriting tab itself. `kpiBand`,
+`computedLines` and `fieldRow` are wired and syntax-clean, and the classes they
+emit are the same classes I photographed on the styleguide — but I have not seen
+the real screen. Also: the browser pane renders a 1280px viewport at roughly a
+third scale, so the 1280 captures prove the layout did not regress and are too
+coarse to show a 1px dotted underline; that detail is evidenced by the 375
+captures and by computed-style reads. And the pane's synthetic pointer input was
+unreliable, so hover/tap were exercised by dispatched events on the real
+handlers rather than by driven mouse.
+
+**Gate.** `arch` 0 errors / 10 pre-existing warnings, `check` 19/19, `smoke` all
+pass, `test` 142/142.
+
+**Removed:** nothing visual — but a whole class of guesswork. A reader who did
+not know what a debt burden ratio was now does not have to leave the screen to
+find out, and a reader who does never sees the affordance fire.

@@ -1352,3 +1352,89 @@ textarea.input { block-size: auto; min-block-size: 84px; padding-block: var(--s-
 
 /* Key–value strip used under a page head */
 .kv-strip { display: flex; flex-wrap: wrap; gap: var(--s-24) var(--s-32); }
+
+/* --------------------------------------------------------------------------
+   16. HELP
+   The label explains itself.
+
+   The audience is not a finance person. "Debt burden ratio" and "Loan to value
+   achieved" are jargon to exactly the reader who most needs them, and the
+   plain-English explanation already exists on every model line — it was simply
+   never rendered.
+
+   The affordance is one dotted 1px underline on text that is already on the
+   page. No icon, no question-mark circle, no badge, nothing added at rest. The
+   underline sits at 45% of whatever colour the label already is, so it works on
+   a --text-3 eyebrow and a --text-1 hero line without a second rule, and
+   inverts with the theme for free.
+   -------------------------------------------------------------------------- */
+
+.tip {
+  /* The class rides on the label's own element, so type, tracking and case all
+     come from that class. This only removes the button's defaults. */
+  padding: 0;
+  text-align: inherit;
+  /* A button stretches to fill a grid or flex track, which would put a 220px
+     hover target under a 90px label. The trigger is the words, nothing more. */
+  inline-size: fit-content;
+  max-inline-size: 100%;
+  cursor: help;
+  text-decoration-line: underline;
+  text-decoration-style: dotted;
+  text-decoration-thickness: 1px;
+  text-decoration-color: color-mix(in oklab, currentColor 45%, transparent);
+  text-underline-offset: 3px;
+  transition: text-decoration-color var(--t-hover) var(--e-precise);
+}
+
+.tip:hover,
+.tip:focus-visible { text-decoration-color: currentColor; }
+
+/* One popover, shared. It is the only overlay on screen and never more than
+   one, so it does not need a stacking scale of its own — 60 clears the sticky
+   table head at 4 and the page toolbar at 40. */
+.help-pop {
+  position: fixed;
+  /* The stylesheet default doubles as the measuring position and as the
+     fallback if constructed stylesheets are unavailable. */
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  z-index: 60;
+  /* 44ch is the measure; the viewport wins when it is narrower, which is what
+     keeps this readable on a 375px iPad-in-portrait or a phone. */
+  max-inline-size: min(44ch, calc(100vw - 32px));
+  inline-size: max-content;
+  padding: var(--s-8) var(--s-12);
+  background: var(--bg-300);
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--r-sm);
+  box-shadow: var(--glint);
+  color: var(--text-2);
+  text-align: start;
+  text-transform: none;
+  letter-spacing: var(--ls-caption);
+  /* Never intercepts a click: an outside-click dismiss that the popover itself
+     can swallow is a popover you cannot close. */
+  pointer-events: none;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity var(--t-state) var(--e-precise), visibility 0s linear var(--t-state);
+}
+
+.help-pop.is-open {
+  visibility: visible;
+  opacity: 1;
+  transition: opacity var(--t-state) var(--e-precise);
+}
+
+/* Keep the information, drop the fade. */
+@media (prefers-reduced-motion: reduce) {
+  .help-pop, .help-pop.is-open, .tip { transition: none; }
+}
+
+/* An explanation is a screen affordance. On paper the underline is noise and
+   the popover does not exist. */
+@media print {
+  .tip { text-decoration-line: none; }
+  .help-pop { display: none; }
+}

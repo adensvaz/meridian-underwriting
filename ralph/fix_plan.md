@@ -244,3 +244,18 @@ underwriting logic as data.
       failing one for an autonomous loop: it halts good iterations at random and
       erodes trust in a green result. If it recurs, capture the full output
       before re-running, because the failure detail is gone once it passes.
+- [ ] **There is no client-side test harness at all.** `npm test` covers the
+      server exclusively, so it passes identically whether the tooltip opens or
+      never opens once — as the agent that built it pointed out. Every UI
+      guarantee in this product is currently held up by a person looking at a
+      screenshot, which is exactly the kind of assurance that decays silently
+      under an autonomous loop. A small DOM harness would cover the behaviours
+      that are cheap to break and invisible when broken: the tooltip opening on
+      focus, Escape restoring focus, the review row committing an edit, the
+      count-up settling to a formatted value.
+- [ ] **`ResolvedInput` lost a field silently and nobody noticed.** `runModel`
+      builds it by copying properties one at a time, so `help` was simply absent
+      until someone needed it. The same is true of anything added to `InputDef`
+      in future. Either construct it by spreading the definition and overriding,
+      or add a check that every presentational property on `InputDef` reaches
+      `ResolvedInput`.

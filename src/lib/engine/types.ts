@@ -200,6 +200,13 @@ export interface ResolvedInput {
   type: InputType;
   unit?: string;
   format?: Format;
+  /**
+   * Carried through from the InputDef so the reviewer sees the plain-English
+   * explanation next to the field they are being asked to accept or overwrite.
+   * `ComputedValue` already carries its own; without this one the UI could
+   * explain a result and not the assumption that produced it.
+   */
+  help?: string;
   /** Where the value actually came from, for the provenance column. */
   origin: "user" | "extracted" | "default" | "missing";
   confidence?: number | null;

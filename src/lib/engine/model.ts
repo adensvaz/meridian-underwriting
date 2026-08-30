@@ -243,6 +243,7 @@ export function runModel(options: RunOptions): RunResult {
       value,
       type: input.type,
       unit: input.unit,
+      help: input.help,
       origin,
       confidence: hit?.confidence ?? null,
       sourceDocumentId: hit?.sourceDocumentId ?? null,

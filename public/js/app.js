@@ -9,6 +9,7 @@ import * as API from "./api.js";
 import { renderCollect } from "./collect-admin.js";
 import { sensitivitySection } from "./sensitivity.js";
 import { solverSection } from "./solver.js";
+import { helpLabel } from "./tooltip.js";
 import {
   EM_DASH,
   areaFragment,
@@ -1794,7 +1795,10 @@ function fieldRow(input, options = {}) {
   );
 
   row.append(
-    el("div", { class: "field__label", text: input.label }),
+    // Serves both the Review ledger and the Underwriting assumptions panel —
+    // the two places a reader is asked to accept or overwrite a figure, which
+    // is precisely where knowing what the figure means matters most.
+    helpLabel("div", "field__label", input.label, input.help),
     well,
     meter,
     confirm,
@@ -2377,7 +2381,9 @@ function kpiBand(result) {
     // child into the literal text "null".
     append(
       tile,
-      el("div", { class: "kpi__label", text: cv.label }),
+      // The eyebrow explains itself when the model gave it words to explain
+      // itself with. No help text, no button, no underline — the plain div.
+      helpLabel("div", "kpi__label", cv.label, cv.help),
       el("div", { class: "kpi__figure" }, el("span", { class: "kpi__val" }, fmtSpan)),
       subText ? el("div", { class: "kpi__sub", text: subText }) : null,
     );
@@ -2441,12 +2447,14 @@ function computedLines(result) {
     for (const line of lines) {
       const cell = el("td", { class: "num w-money" });
       cell.append(liveFigure(line.key, line.value, line.format, line.precision, { judgement: true }));
-      const labelCell = el("td", { class: "w-name" }, el("span", { text: line.label }));
+      const labelCell = el("td", { class: "w-name" }, helpLabel("span", "", line.label, line.help));
+      // classList, not className — the label may be a help trigger carrying a
+      // `tip` class, and an assignment would silently strip the affordance.
       if (line.emphasis === "hero" || line.emphasis === "strong") {
-        labelCell.firstChild.className = "c-1";
+        labelCell.firstChild.classList.add("c-1");
         cell.classList.add("c-1");
       } else if (line.emphasis === "muted") {
-        labelCell.firstChild.className = "c-3";
+        labelCell.firstChild.classList.add("c-3");
       }
       if (line.error) {
         labelCell.append(el("span", { class: "tag tag--manual", text: "error" }));

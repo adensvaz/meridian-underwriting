@@ -10,6 +10,7 @@
 // /css/styleguide.css, because style-src self blocks inline styles and CSSOM
 // style writes alike.
 
+import { attachHelp } from './tooltip.js';
 
 (() => {
   'use strict';
@@ -153,6 +154,35 @@
     }, 60);
   };
   document.getElementById('run-extract').addEventListener('click', runExtract);
+
+  /* ---- help --------------------------------------------------------- */
+  // The specimen for the help affordance is the labels that were already on
+  // this page, not a new swatch board: the whole point of the component is
+  // that it adds nothing at rest. In the product these strings arrive on
+  // ComputedValue.help and InputDef.help; here they are lifted verbatim from
+  // the shipped dubai-residential models so the specimen cannot drift into
+  // prose that no model actually ships.
+  const HELP = {
+    'Purchase price': 'Agreed purchase price before any acquisition costs. This is the number on the Form F / MOU, not the all-in cost — DLD and agency fees are added separately below.',
+    'Gross yield': 'Annual rent divided by purchase price. Analytically crude — it ignores service charge, vacancy and the 4% DLD fee entirely — but it is the dominant local vernacular and every counterparty will quote it, so it is shown first.',
+    'Net yield': 'NOI over all-in cost. The honest number: it carries the service charge, vacancy, irrecoverable VAT and the 4% DLD fee. Expect 150-250bps below the gross yield a broker will quote.',
+    DSCR: 'NOI over debt service. UAE banks underwrite to 1.25x minimum on an investment mortgage; below that the facility is resized or declined.',
+    'Contracted rent': 'Annual rent as a lump sum, the way Dubai quotes it — the headline figure on the Ejari tenancy contract. Summed across units from the rent roll when one is uploaded. Use the in-place contract rent if tenanted, or the achievable market rent if vacant.',
+    'Service charge': 'Mollak-approved Owners Association budget per sqft per year, before VAT. This is a landlord cost in residential and is not recoverable from the tenant. Typical: apartment 10-25, villa 3-8. It is the dominant OpEx line in almost every Dubai residential deal.'
+  };
+
+  // A label with help becomes a real button in the tab order. A label without
+  // it is left exactly as it was — no button, no underline, no listener.
+  for (const label of document.querySelectorAll('.kpi__label, .field .field__label')) {
+    const help = HELP[label.textContent.trim()];
+    if (!help) continue;
+    const trigger = document.createElement('button');
+    trigger.type = 'button';
+    trigger.className = `${label.className} tip`;
+    trigger.textContent = label.textContent;
+    attachHelp(trigger, help);
+    label.replaceWith(trigger);
+  }
 
   /* ---- first paint: seat needles, roll the KPIs, score the flags ----- */
   requestAnimationFrame(() => {
