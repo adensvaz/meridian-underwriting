@@ -95,3 +95,52 @@ shipped models validate.
 Backlog: 28 open, 12 closed. The loop can continue from here — `./ralph/loop.sh`
 now refuses to start on a red build, verifies after every iteration, commits each
 good one, and stops after two iterations that make no progress.
+
+---
+
+2026-08-30 — Loop hardening.
+
+Added `npm run arch`, an architecture and code-quality gate, and wired it into
+the loop ahead of the other checks. Tests catch a wrong answer; they do not
+catch a right answer arrived at badly, and that kind of decay is silent,
+compounds across iterations, and is how a codebase rots under automation.
+
+It enforces: one-way dependency direction (routes → lib → db, with the engine
+pure and the db layer forbidden from importing transport or the AI layer); no
+circular imports; Node's type-stripping limits (no enum, namespace, decorators,
+parameter properties, explicit .ts extensions); no raw SQL outside repo.ts,
+which is the mechanism behind tenant isolation; no hard-coded underwriting
+constants in the engine, which would regress the "logic is data" claim; no
+eval; and size budgets as warnings.
+
+It found a false positive in itself on the first run — it contains the literal
+text of every pattern it looks for, so it flagged its own rule table. A linter
+cannot lint its own rules; carved out with a note.
+
+Current state: 0 errors, 10 warnings. The warnings are real signal, chiefly
+`runModel()` at 278 lines and `solveLoanAmount()` at 235.
+
+`ralph/PROMPT.md` rewritten to carry the architecture map, the invariant list,
+a think-before-you-type step, a self-review-the-diff step before ticking, and
+an explicit instruction to move a wrong-shaped item to the Icebox rather than
+thrash on it. Packaged as a skill at `.claude/skills/ralph/SKILL.md`.
+
+`npm test` now discovers test files rather than using a hand-maintained list
+that silently stops covering new tests.
+
+2026-08-30 — Two correctness items closed.
+
+- Commercial occupancy rebound to a new canonical `occupancy` derivation:
+  area-weighted when the rent roll carries a complete set of areas, unit-count
+  otherwise. Binding straight to `occupancy_by_area` would have looked more
+  precise and behaved worse — one missing area and the derivation vanishes, the
+  input falls back to its default, and the screen shows a plausible number with
+  no relationship to the document. Verified: 91.18% by area vs 80.00% by units
+  on a five-suite floor, and a clean degrade to 80.00% when an area is missing.
+- `src/lib/db/repo.test.ts` proves the guarantee that had none: a human
+  correction survives re-extraction, including hand-edited rent-roll rows, and
+  clearing a correction falls back to the AI value rather than to nothing. Also
+  covers ownership scoping on the collection paths added in Round 3.
+
+Gate: arch 0 errors · check 19/19 · smoke 28/28 · 142 tests.
+Backlog: 26 open, 14 closed.

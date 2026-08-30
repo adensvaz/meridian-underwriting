@@ -160,7 +160,10 @@ export const dubaiCommercialFull: ModelDefinition = {
       max: 1,
       extract: true,
       source: "rent_roll",
-      derivedFrom: "physical_occupancy",
+      // Area-weighted where the rent roll allows it, unit-count otherwise. On a
+      // floor of unequal suites the two differ materially and every recovery
+      // and service-charge line follows the area, not the unit count.
+      derivedFrom: "occupancy",
       help: "Let area as a proportion of NLA at acquisition. Computed from the rent roll's occupancy column when one is uploaded. Distinct from the structural vacancy allowance below, which covers ongoing churn.",
     },
     {

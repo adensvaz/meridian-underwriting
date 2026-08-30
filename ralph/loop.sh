@@ -37,13 +37,12 @@ journal_lines() { wc -l < "$JOURNAL" 2>/dev/null | tr -d ' ' || echo 0; }
 
 # The gate. Every one of these must pass before and after each iteration.
 verify() {
+  npm run arch   >/tmp/ralph-arch.log   2>&1 || { echo "arch gate failed"; tail -25 /tmp/ralph-arch.log; return 1; }
   npm run check  >/tmp/ralph-check.log  2>&1 || { echo "check failed";  tail -25 /tmp/ralph-check.log;  return 1; }
   npm run smoke  >/tmp/ralph-smoke.log  2>&1 || { echo "smoke failed";  tail -25 /tmp/ralph-smoke.log;  return 1; }
-  for t in src/lib/parse/parse.test.ts src/lib/auth/invite.test.ts \
-           src/lib/engine/analysis.test.ts src/lib/export/export.test.ts; do
-    [ -f "$t" ] || continue
-    node --test "$t" >/tmp/ralph-test.log 2>&1 || { echo "tests failed in $t"; tail -25 /tmp/ralph-test.log; return 1; }
-  done
+  # Discovered, not listed — a hand-maintained list silently stops covering
+  # new tests the moment somebody forgets to add one.
+  npm test >/tmp/ralph-test.log 2>&1 || { echo "tests failed"; tail -30 /tmp/ralph-test.log; return 1; }
   return 0
 }
 

@@ -6,7 +6,7 @@ this file wholesale.
 
 ## Correctness and trust
 
-- [ ] Bind the commercial models' occupancy input to `occupancy_by_area` rather
+- [x] Bind the commercial models' occupancy input to `occupancy_by_area` rather
       than `physical_occupancy`. The area-weighted derivation now exists in
       `deriveFromTables`, but `dubai-commercial-full` and `us-multifamily-full`
       still read the unit-count measure. On a floor of unequal suites those
@@ -26,7 +26,7 @@ this file wholesale.
       rents sum to gross potential rent and that T12 opex lines sum to total
       opex. A rent roll whose rows do not foot to the stated total is the fastest
       way to lose a reader's trust, and right now nothing surfaces the mismatch.
-- [ ] Re-extraction must never clobber a human correction. There is a guard in
+- [x] Re-extraction must never clobber a human correction. There is a guard in (done — src/lib/db/repo.test.ts, 5 tests incl. rent-roll rows)
       `upsertAiField`, but no test proves it. Write one: extract, edit a field,
       re-extract, assert `user_value` survived and `ai_value` updated.
 - [ ] T12 normalisation rules are declared in the extraction prompt but not

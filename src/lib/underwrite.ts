@@ -94,10 +94,24 @@ export function deriveFromTables(
       // recovery lines follow the area, not the count.
       const occupiedArea = occupied.reduce((sum, u) => sum + (u.area_sqft ?? 0), 0);
       const totalArea = units.reduce((sum, u) => sum + (u.area_sqft ?? 0), 0);
-      if (totalArea > 0 && units.every((u) => typeof u.area_sqft === "number")) {
+      const areasComplete = totalArea > 0 && units.every((u) => typeof u.area_sqft === "number");
+
+      if (areasComplete) {
         values.occupancy_by_area = occupiedArea / totalArea;
         values.vacant_area_sqft = totalArea - occupiedArea;
       }
+
+      // The canonical measure a model should bind to. Area-weighted when the
+      // rent roll carries a complete set of areas, unit-count otherwise.
+      //
+      // Binding a model directly to `occupancy_by_area` would look more precise
+      // and behave worse: on a rent roll missing a single area the derivation
+      // vanishes and the input silently falls back to its default, which is a
+      // plausible number unrelated to the document. Degrading to the unit-count
+      // measure is less exact but always answers the question that was asked.
+      values.occupancy = areasComplete
+        ? (values.occupancy_by_area as number)
+        : occupied.length / units.length;
 
       const vacant = units.length - occupied.length;
       if (vacant > 0) {

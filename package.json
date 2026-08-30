@@ -14,8 +14,9 @@
     "serve": "node src/server.ts",
     "dev": "node --watch src/server.ts",
     "check": "node src/scripts/selfcheck.ts",
-    "test": "node --test src/lib/parse/parse.test.ts",
-    "smoke": "node src/scripts/smoke.ts"
+    "test": "node --test \"src/**/*.test.ts\"",
+    "smoke": "node src/scripts/smoke.ts",
+    "arch": "node src/scripts/arch.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.68.0",
