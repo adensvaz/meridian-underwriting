@@ -1,17 +1,29 @@
-# Meridian
+# Meridian — AI real estate underwriting for Dubai and the UAE
 
-AI-powered commercial real estate deal underwriting, built for the Dubai / UAE
-market.
+**Meridian is an open-source AI deal underwriting platform for commercial real
+estate.** You upload a property's Offering Memorandum, rent roll and T12
+financials; it extracts the numbers, runs them through an underwriting model you
+can edit, and writes the investment committee memo — strengths, red flags and
+due-diligence questions.
 
-Upload an Offering Memorandum, a rent roll and a T12. The system reads them,
-extracts the underwriting inputs with a source citation and an honest confidence
-for every figure, populates a **customisable** underwriting model, lets you
-correct anything the machine got wrong, computes the return analysis, and writes
-the investment committee memo — strengths, red flags and due-diligence
-questions.
+It is built specifically for **Dubai and the wider UAE**, where the standard
+US-derived underwriting model is wrong in ways that cost money: there is no
+annual property tax, service charge is the landlord's largest recurring cost,
+rent is paid in post-dated cheques, and renewal increases are capped against the
+RERA rental index rather than growing at a flat assumption.
 
-Runs on plain Node. **No build step, no framework, no database server.** Node
-22.6+ executes the TypeScript directly and persistence is `node:sqlite`.
+Runs on plain Node. **No build step, no framework, no database server, no
+runtime dependencies in the browser.** Node 22.6+ executes the TypeScript
+directly and persistence is `node:sqlite`.
+
+| | |
+|---|---|
+| **What it does** | Reads OM / rent roll / T12 → extracts inputs with provenance → computes NOI, gross yield, net yield, DSCR, cash-on-cash, IRR → writes an IC memo |
+| **Built for** | Dubai / UAE commercial and residential real estate. A US multifamily model ships too. |
+| **Underwriting logic** | Editable data, not hard-coded. Formulas live in the database and are evaluated by a sandboxed expression language. |
+| **Works offline** | Yes. With no API key it uses deterministic extraction and a rules-based write-up — nothing leaves your server. |
+| **Stack** | Node 22.6+, native TypeScript, `node:sqlite`, vanilla HTML/CSS/JS. Four npm dependencies total. |
+| **Verified** | 19 acceptance checks, 28 end-to-end HTTP checks, 85 unit tests |
 
 ---
 
@@ -282,6 +294,98 @@ public/         hand-written HTML, CSS and JS. No framework, no build.
 docs/DESIGN.md  the design system
 ralph/          the iteration loop and its backlog
 ```
+
+---
+
+## Frequently asked questions
+
+### What is Meridian?
+
+Meridian is an open-source AI underwriting platform for commercial real estate.
+It reads a property's Offering Memorandum, rent roll and trailing-12-month
+financials, extracts the underwriting inputs, computes the return analysis, and
+generates an investment committee write-up. It is built for the Dubai / UAE
+market and also ships a US multifamily model.
+
+### How is Dubai real estate underwriting different from US underwriting?
+
+Five differences matter enough to break a US-built model:
+
+1. **There is no annual property tax in the UAE.** What exists is a one-off 4%
+   DLD transfer fee on acquisition and a municipality housing fee on rent.
+2. **Service charge is the dominant operating expense**, quoted in AED per
+   square foot per year, billed by the Owners Association through Mollak, and
+   borne by the landlord in residential — not recoverable from the tenant.
+3. **Rent is an annual sum paid in 1, 2, 4, 6 or 12 post-dated cheques.** Fewer
+   cheques means a lower headline rent but materially better cash timing.
+4. **Renewal increases are capped against the RERA rental index**, so a unit let
+   below market cannot be marked to market in one step.
+5. **Buyer-side transaction costs run roughly 6–8% all in**, so net yield must
+   be measured on total capital deployed, not on the purchase price.
+
+### What is the RERA rent increase cap?
+
+Under Dubai Decree 43/2013, the permitted increase at renewal is tiered against
+the RERA rental index: up to 10% below index permits **no increase**; 11–20%
+below permits **5%**; 21–30% below permits **10%**; 31–40% below permits **15%**;
+more than 40% below permits **20%**. Meridian applies this tier table to
+in-place rent growth in the projection instead of assuming a flat percentage. A
+unit 45% below index takes several renewal cycles to catch up, and the model
+shows that.
+
+### Does it work without an AI API key?
+
+Yes, completely. With no `ANTHROPIC_API_KEY` set, extraction falls back to a
+deterministic extractor that reads structured tables — rent-roll columns are
+classified, totals rows skipped, cheque counts and Ejari numbers captured, sq m
+converted to sq ft, and T12 lines categorised with non-recurring items excluded
+from NOI. The write-up falls back to a rules engine driven by the model's own
+flag definitions. **Nothing leaves your server.** This exists because some Gulf
+family offices will not send deal documents to a third party.
+
+### Can I change the underwriting formulas without a developer?
+
+Yes. That is the central design decision. An underwriting model is a JSON
+document in the database — inputs, computed lines, a multi-year projection and
+return formulas — not code. You can edit assumptions, add or remove expense
+lines, and rewrite a formula such as `noi = egi - opex` in the browser. Models
+are versioned, every save writes an immutable revision, and each underwriting
+run snapshots the model it used so a finished deal never changes retroactively.
+
+### What documents can it read?
+
+Text-based PDF, XLSX, XLS, CSV, TSV, DOCX, HTML and plain text. File type is
+detected by **magic bytes, not by file extension**, because hosts routinely
+serve an HTML error page from a `.pdf` URL. Scanned or photographed documents
+with no text layer are **detected and refused with a clear message** rather than
+being guessed at — there is no OCR yet.
+
+### Is my deal data sent anywhere?
+
+Only if you configure an API key, and then only document *text* (never the
+original file) for extraction, and *computed figures* (never document text) for
+the write-up. With no key configured, no outbound request is made at all. There
+is no analytics, no error reporting and no CDN — the front end loads no
+third-party resource, which the Content-Security-Policy also enforces. See
+[docs/DATA-HANDLING.md](docs/DATA-HANDLING.md).
+
+### What metrics does it compute?
+
+Price per square foot, gross yield, net yield, NOI, DSCR, cash-on-cash, payback
+period, levered and unlevered IRR, equity multiple, loan balance and exit
+proceeds, plus a multi-year projection. Dubai buyers lead with price per square
+foot and gross yield, so those sit at the top of the summary; IRR and equity
+multiple sit in the institutional view.
+
+### How does it avoid AI hallucinating a number?
+
+Three ways. The extraction prompt requires a figure absent from the document to
+come back as `null`, never a guess. Nulls propagate through the formula engine
+and render as an em dash, so missing data looks missing rather than becoming a
+silent zero. And the write-up is generated from the **computed underwriting
+output only** — it never sees the raw documents, so it cannot contradict the
+numbers on screen or invent a return the engine did not produce. Risk detection
+is deterministic; the model supplies judgement and prose, not arithmetic.
 
 ---
 
