@@ -13,6 +13,7 @@
 
 import { test, before, after, describe } from "node:test";
 import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -36,7 +37,10 @@ function makeActor(label: string) {
   const org = repo.createOrganization(`${label} Capital`, "AE");
   const user = repo.createUser({
     orgId: org.id,
-    email: `${label}-${Date.now()}-${Math.round(performance.now() * 1000)}@x.test`,
+    // randomUUID, not a clock: users.email is UNIQUE and two actors created in
+    // the same millisecond would collide, which is a flaky failure that looks
+    // like a real one.
+    email: `${label}-${randomUUID()}@x.test`,
     name: label,
   });
   return {

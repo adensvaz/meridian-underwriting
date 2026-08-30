@@ -15,6 +15,7 @@ import { test, after } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { createServer, type Server } from "node:http";
+import { randomUUID } from "node:crypto";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -52,7 +53,8 @@ const OTHER_PASSWORD = "walnut harbour kettle 77";
 let counter = 0;
 function unique(prefix: string): string {
   counter++;
-  return `${prefix}-${counter}-${Date.now()}@example.test`;
+  // See repo.test.ts: a clock in a UNIQUE column is a latent flake.
+  return `${prefix}-${counter}-${randomUUID()}@example.test`;
 }
 
 function makeFirm(name: string, role = "owner"): { org: repo.OrganizationRow; actor: AuthenticatedUser } {

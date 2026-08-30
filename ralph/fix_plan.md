@@ -236,3 +236,11 @@ underwriting logic as data.
       clearly, no property-title question appears, the six numbers seed, the
       assessment runs on create, and it lands on Underwriting rather than
       Documents.
+- [ ] **A test flaked once and I could not reproduce it.** One run reported
+      141/1 during the intake work; five subsequent runs were 142/0. I removed
+      the one latent race I could actually identify — clock-derived emails in a
+      UNIQUE column, which collide if two are created in the same millisecond —
+      but that may not have been the cause. An intermittent gate is worse than a
+      failing one for an autonomous loop: it halts good iterations at random and
+      erodes trust in a green result. If it recurs, capture the full output
+      before re-running, because the failure detail is gone once it passes.
