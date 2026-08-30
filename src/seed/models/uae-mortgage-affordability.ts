@@ -44,7 +44,7 @@ export const uaeMortgageAffordability: ModelDefinition = {
       default: "expat_resident",
       extract: true,
       source: "om",
-      help: "Drives the Central Bank loan-to-value ceiling. Non-residents are capped well below residents.",
+      help: "Whether the buyer is a UAE national, an expat living here, or based overseas. This alone changes how much they are allowed to borrow — nationals may borrow the most, non-residents the least.",
     },
     {
       key: "employment_type",
@@ -57,7 +57,7 @@ export const uaeMortgageAffordability: ModelDefinition = {
       ],
       default: "salaried",
       extract: true,
-      help: "Sets the maximum age at loan maturity: 65 for salaried, 70 for self-employed.",
+      help: "Salaried or self-employed. It sets the age by which the loan must be repaid — usually 65 for salaried, 70 for self-employed — which can shorten the term for an older buyer.",
     },
     {
       key: "applicant_age",
@@ -70,7 +70,7 @@ export const uaeMortgageAffordability: ModelDefinition = {
       max: 75,
       extract: true,
       source: "om",
-      help: "From the Emirates ID or passport. Caps the term, because the loan must be repaid by the maturity age.",
+      help: "From their Emirates ID or passport. It matters because the loan must be fully repaid before a maximum age, so an older buyer gets a shorter term and therefore a smaller loan.",
     },
 
     // ---- income -------------------------------------------------------
@@ -85,7 +85,7 @@ export const uaeMortgageAffordability: ModelDefinition = {
       extract: true,
       source: "om",
       required: true,
-      help: "Basic salary plus fixed allowances, from the salary certificate. Most lenders discount variable commission.",
+      help: "Basic salary plus fixed allowances, before any deductions — the figure on their salary certificate. Leave out bonuses and commission; most banks will not count them.",
     },
     {
       key: "other_monthly_income",
@@ -96,7 +96,7 @@ export const uaeMortgageAffordability: ModelDefinition = {
       default: 0,
       min: 0,
       extract: true,
-      help: "Rental or other documented recurring income. Lenders typically haircut rental income — see the haircut input.",
+      help: "Any other regular documented income, such as rent from a property they already own. Banks count this but usually not in full.",
     },
     {
       key: "other_income_haircut",
@@ -106,7 +106,7 @@ export const uaeMortgageAffordability: ModelDefinition = {
       default: 0.2,
       min: 0,
       max: 1,
-      help: "Banks rarely credit non-salary income in full. 20% is a common discount on documented rental income.",
+      help: "How much of that other income the bank ignores, because it is less reliable than salary. 20% is typical.",
     },
 
     // ---- existing commitments ----------------------------------------
@@ -120,7 +120,7 @@ export const uaeMortgageAffordability: ModelDefinition = {
       min: 0,
       extract: true,
       source: "om",
-      help: "Personal loans, car finance and any existing mortgage, from the liability letter or bank statements.",
+      help: "What they already pay each month on personal loans, car finance or another mortgage. Found on a liability letter from their bank, or on their statements.",
     },
     {
       key: "credit_card_limits",
@@ -132,7 +132,7 @@ export const uaeMortgageAffordability: ModelDefinition = {
       min: 0,
       extract: true,
       source: "om",
-      help: "The LIMIT, not the balance. UAE lenders assume a monthly commitment of a fixed percentage of the total limit even when the card is paid off.",
+      help: "The total LIMIT across all their cards — not what they owe. This catches people out: a card with a zero balance still reduces borrowing power, because the bank assumes they could spend up to the limit.",
     },
     {
       key: "credit_card_charge_rate",
@@ -142,7 +142,7 @@ export const uaeMortgageAffordability: ModelDefinition = {
       default: 0.05,
       min: 0,
       max: 0.2,
-      help: "The share of the card limit counted as a monthly commitment. 5% is the standard UAE assumption.",
+      help: "How much of the card limit the bank counts as a monthly commitment. 5% is the UAE standard, so a 100,000 limit is treated as 5,000 a month.",
     },
 
     // ---- the property -------------------------------------------------
@@ -157,7 +157,7 @@ export const uaeMortgageAffordability: ModelDefinition = {
       extract: true,
       source: "om",
       required: true,
-      help: "The agreed purchase price. The AED 5,000,000 line changes the LTV ceiling.",
+      help: "The agreed price, or the buyer’s target if they are still looking. Crossing AED 5,000,000 reduces how much they are allowed to borrow.",
     },
     {
       key: "is_first_property",
@@ -166,7 +166,7 @@ export const uaeMortgageAffordability: ModelDefinition = {
       type: "boolean",
       default: true,
       extract: true,
-      help: "A second or subsequent property carries a materially lower LTV ceiling.",
+      help: "Whether this is their first property in the UAE. A second one requires a bigger deposit.",
     },
     {
       key: "is_off_plan",
@@ -175,7 +175,7 @@ export const uaeMortgageAffordability: ModelDefinition = {
       type: "boolean",
       default: false,
       extract: true,
-      help: "Off-plan borrowing is capped at 50% regardless of the applicant's profile.",
+      help: "Buying from a developer before it is built. Off-plan requires at least a 50% deposit whoever the buyer is.",
     },
 
     // ---- the facility -------------------------------------------------
@@ -187,7 +187,7 @@ export const uaeMortgageAffordability: ModelDefinition = {
       default: 0.0449,
       min: 0,
       max: 0.25,
-      help: "The rate actually quoted. Fixed-period rates revert to EIBOR plus a margin, which is what the stress rate is for.",
+      help: "The rate the bank has quoted. If unsure, leave the default — it is close to current market and can be changed later.",
     },
     {
       key: "stress_uplift",
@@ -197,7 +197,7 @@ export const uaeMortgageAffordability: ModelDefinition = {
       default: 0.02,
       min: 0,
       max: 0.1,
-      help: "Lenders test affordability at a rate above the quoted one. 200bps is a common assumption; set it to your lender's policy.",
+      help: "How much higher than the quoted rate to test affordability at, in case rates rise. Banks do this too; 2% is typical.",
     },
     {
       key: "requested_term_years",
@@ -208,7 +208,7 @@ export const uaeMortgageAffordability: ModelDefinition = {
       default: 25,
       min: 1,
       max: 30,
-      help: "Capped at 25 years by regulation and further capped by the applicant's age at maturity.",
+      help: "How many years the buyer wants to spread the loan over. Longer means lower monthly payments and a bigger possible loan, up to the 25-year legal maximum.",
     },
     {
       key: "max_term_years",
@@ -219,7 +219,7 @@ export const uaeMortgageAffordability: ModelDefinition = {
       default: 25,
       min: 1,
       max: 30,
-      help: "The Central Bank ceiling on residential mortgage tenor.",
+      help: "The longest term allowed by UAE regulation. Leave at 25 unless your lender is stricter.",
     },
     {
       key: "dbr_cap",
@@ -229,7 +229,7 @@ export const uaeMortgageAffordability: ModelDefinition = {
       default: 0.5,
       min: 0.1,
       max: 0.8,
-      help: "Total monthly debt service as a share of gross income. The Central Bank ceiling is 50%; some lenders apply less.",
+      help: "The most of their income that can go to debt each month. UAE regulation caps this at 50%; some banks apply less.",
     },
     {
       key: "max_age_salaried",
@@ -240,7 +240,7 @@ export const uaeMortgageAffordability: ModelDefinition = {
       default: 65,
       min: 50,
       max: 80,
-      help: "The loan must be fully repaid by this age.",
+      help: "The age by which a salaried borrower must have repaid the loan. Usually 65.",
     },
     {
       key: "max_age_self_employed",
@@ -251,7 +251,7 @@ export const uaeMortgageAffordability: ModelDefinition = {
       default: 70,
       min: 50,
       max: 85,
-      help: "Self-employed applicants are usually allowed five more years than salaried.",
+      help: "The age by which a self-employed borrower must have repaid. Usually 70 — five years more than salaried.",
     },
 
     // ---- completion costs --------------------------------------------
@@ -261,7 +261,7 @@ export const uaeMortgageAffordability: ModelDefinition = {
       group: "Completion costs",
       type: "percent",
       default: 0.04,
-      help: "4% of the price. Legally split, in practice paid entirely by the buyer.",
+      help: "The Land Department transfer fee, 4% of the price. Legally shared with the seller but in practice the buyer pays all of it.",
     },
     {
       key: "agency_fee_pct",
@@ -269,7 +269,7 @@ export const uaeMortgageAffordability: ModelDefinition = {
       group: "Completion costs",
       type: "percent",
       default: 0.02,
-      help: "2% plus 5% VAT is the market standard on a resale.",
+      help: "The estate agent’s commission, normally 2% plus VAT.",
     },
     {
       key: "mortgage_reg_pct",
@@ -277,7 +277,7 @@ export const uaeMortgageAffordability: ModelDefinition = {
       group: "Completion costs",
       type: "percent",
       default: 0.0025,
-      help: "0.25% of the loan amount, plus a fixed admin charge.",
+      help: "The fee to register the mortgage against the property, 0.25% of the loan.",
     },
     {
       key: "bank_arrangement_pct",
@@ -285,7 +285,7 @@ export const uaeMortgageAffordability: ModelDefinition = {
       group: "Completion costs",
       type: "percent",
       default: 0.01,
-      help: "Typically 0.5%-1.0% of the loan, often negotiable.",
+      help: "What the bank charges to set the loan up, usually between 0.5% and 1% of the loan. Often negotiable.",
     },
     {
       key: "fixed_completion_costs",
@@ -294,7 +294,7 @@ export const uaeMortgageAffordability: ModelDefinition = {
       type: "currency",
       unit: "AED",
       default: 12000,
-      help: "Trustee office fee, title deed issuance, valuation and conveyancing, taken together.",
+      help: "Trustee office, title deed, valuation and conveyancing together — fees that do not scale with the price.",
     },
     {
       key: "buyer_available_cash",
@@ -305,7 +305,7 @@ export const uaeMortgageAffordability: ModelDefinition = {
       default: 700000,
       min: 0,
       extract: true,
-      help: "From the bank statements. Compared against the total cash needed to complete.",
+      help: "How much the buyer actually has to put in, from their savings and statements. Compared against everything they need on the day.",
     },
   ],
 
@@ -318,7 +318,7 @@ export const uaeMortgageAffordability: ModelDefinition = {
       formula: "gross_monthly_income + other_monthly_income * (1 - other_income_haircut)",
       format: "currency",
       unit: "AED/month",
-      help: "Salary in full, other income after the lender's haircut.",
+      help: "The income a bank will actually count. Salary is taken in full; other income such as rent is usually discounted, because it is less certain.",
     },
     {
       key: "card_commitment",
@@ -327,7 +327,7 @@ export const uaeMortgageAffordability: ModelDefinition = {
       formula: "credit_card_limits * credit_card_charge_rate",
       format: "currency",
       unit: "AED/month",
-      help: "Counted on the limit, not the balance — a paid-off card still reduces borrowing power.",
+      help: "What credit cards cost this buyer in the bank’s eyes. UAE lenders assume a monthly commitment of 5% of the total card LIMIT even if the balance is zero, so an unused card still reduces how much they can borrow.",
     },
     {
       key: "total_existing_commitments",
@@ -344,7 +344,7 @@ export const uaeMortgageAffordability: ModelDefinition = {
       formula: "assessed_income * dbr_cap",
       format: "currency",
       unit: "AED/month",
-      help: "The debt burden ratio ceiling applied to assessed income.",
+      help: "The most the regulator allows this buyer to spend on all debt each month — a fixed share of their assessed income.",
     },
     {
       key: "available_for_mortgage",
@@ -354,7 +354,7 @@ export const uaeMortgageAffordability: ModelDefinition = {
       format: "currency",
       unit: "AED/month",
       emphasis: "strong",
-      help: "What is left for a mortgage after existing commitments are deducted from the allowance.",
+      help: "How much of their monthly income is free for a mortgage, after the regulator’s cap is applied and existing loan and credit-card commitments are deducted.",
     },
 
     // ---- term ---------------------------------------------------------
@@ -382,7 +382,7 @@ export const uaeMortgageAffordability: ModelDefinition = {
       format: "integer",
       unit: "years",
       emphasis: "strong",
-      help: "The shortest of what was asked for, what regulation allows, and what the applicant's age permits.",
+      help: "How many years are left before the buyer reaches the maximum age, which can shorten the loan term below what they asked for.",
     },
     {
       key: "term_months",
@@ -400,7 +400,7 @@ export const uaeMortgageAffordability: ModelDefinition = {
       group: "Facility",
       formula: "interest_rate + stress_uplift",
       format: "percent",
-      help: "Affordability is assessed at this rate, not at the headline rate.",
+      help: "A rate higher than the one quoted, used to check the buyer could still afford the payments if rates rose. Banks do this; so does this assessment.",
     },
     {
       key: "monthly_stress_rate",
@@ -425,7 +425,7 @@ export const uaeMortgageAffordability: ModelDefinition = {
       format: "currency",
       unit: "AED",
       emphasis: "strong",
-      help: "How much the buyer's income supports, stress-tested.",
+      help: "The most this buyer could afford to repay, based on their income after existing debts and tested at a higher interest rate than quoted. Nothing about the property affects this number.",
     },
 
     // ---- maximum loan by LTV -----------------------------------------
@@ -444,7 +444,7 @@ export const uaeMortgageAffordability: ModelDefinition = {
         "        : (property_price > 5000000 ? 0.65 : 0.80))))",
       format: "percent",
       emphasis: "strong",
-      help: "UAE Central Bank ceiling for this applicant profile, property price and purchase type.",
+      help: "The maximum share of the price a bank is permitted to lend to this buyer. UAE nationals may borrow more than expat residents, who may borrow more than non-residents, and everyone borrows less on a second property or an off-plan purchase.",
     },
     {
       key: "max_loan_by_ltv",
@@ -454,6 +454,7 @@ export const uaeMortgageAffordability: ModelDefinition = {
       format: "currency",
       unit: "AED",
       emphasis: "strong",
+      help: "The most the rules allow them to borrow against this particular property, regardless of income. Set by the Central Bank and depends on nationality, price, and whether it is their first UAE property.",
     },
 
     // ---- the answer ---------------------------------------------------
@@ -465,7 +466,7 @@ export const uaeMortgageAffordability: ModelDefinition = {
       format: "currency",
       unit: "AED",
       emphasis: "hero",
-      help: "The lower of what income supports and what the deposit rules allow.",
+      help: "The most a UAE bank will lend this buyer. It is the lower of two separate limits — what their income can afford to repay, and what the deposit rules allow them to borrow. Whichever is lower is the answer.",
     },
     {
       key: "binding_constraint",
@@ -478,7 +479,7 @@ export const uaeMortgageAffordability: ModelDefinition = {
         ': "Deposit — the loan-to-value ceiling"',
       format: "text",
       emphasis: "strong",
-      help: "Income-bound means more deposit will not help. Deposit-bound means it will.",
+      help: "Which of the two limits is holding this buyer back. \"Income\" means a bigger deposit will not increase the loan — they need more salary, fewer existing debts, or a longer term. \"Deposit\" means finding more cash will unlock a bigger loan.",
     },
     {
       key: "achieved_ltv",
@@ -486,6 +487,7 @@ export const uaeMortgageAffordability: ModelDefinition = {
       group: "Borrowing capacity",
       formula: "max_loan / property_price",
       format: "percent",
+      help: "How much of the price is borrowed rather than paid in cash. 80% means the buyer puts in 20% of their own money. A lower figure is safer and usually earns a better interest rate.",
     },
     {
       key: "monthly_payment",
@@ -495,6 +497,7 @@ export const uaeMortgageAffordability: ModelDefinition = {
       format: "currency",
       unit: "AED/month",
       emphasis: "strong",
+      help: "What they would pay every month at the rate quoted today. Look at the stressed figure beside it too — that is what the payment becomes if rates rise, and banks test affordability against that rather than this one.",
     },
     {
       key: "monthly_payment_stressed",
@@ -503,7 +506,7 @@ export const uaeMortgageAffordability: ModelDefinition = {
       formula: "pmt(monthly_stress_rate, term_months, max_loan)",
       format: "currency",
       unit: "AED/month",
-      help: "What the payment becomes at the stressed rate — the number to show a buyer before they commit.",
+      help: "How much of the price is borrowed rather than paid in cash. 80% means the buyer puts in 20% of their own money and borrows the other 80%. A lower figure is safer and usually earns a better interest rate.",
     },
     {
       key: "resulting_dbr",
@@ -512,7 +515,7 @@ export const uaeMortgageAffordability: ModelDefinition = {
       formula: "(monthly_payment + total_existing_commitments) / assessed_income",
       format: "percent",
       emphasis: "strong",
-      help: "Total debt service over assessed income. Must sit at or below the cap.",
+      help: "The share of monthly income that goes to debt — this mortgage plus any existing loans and credit cards. UAE regulation caps it at 50%; under 40% is comfortable and gets approved more easily.",
     },
 
     // ---- cash to complete ---------------------------------------------
@@ -522,6 +525,7 @@ export const uaeMortgageAffordability: ModelDefinition = {
       group: "Cash to complete",
       formula: "property_price - max_loan",
       format: "currency",
+      help: "The part of the purchase price the buyer pays from their own money. It cannot be borrowed.",
       unit: "AED",
       emphasis: "strong",
     },
@@ -569,7 +573,7 @@ export const uaeMortgageAffordability: ModelDefinition = {
       format: "currency",
       unit: "AED",
       emphasis: "hero",
-      help: "Deposit plus every fee. This is the number a buyer actually needs on the day.",
+      help: "All the one-off fees on top of the price: transfer, agency, mortgage registration, valuation and conveyancing. Typically 6-8% of the purchase price in Dubai.",
     },
     {
       key: "cash_surplus",
@@ -579,7 +583,7 @@ export const uaeMortgageAffordability: ModelDefinition = {
       format: "currency",
       unit: "AED",
       emphasis: "strong",
-      help: "Negative means the purchase cannot complete at this price.",
+      help: "What is left of the buyer’s savings after paying the deposit and every fee. If this is negative they cannot complete the purchase at this price, and the figure shows how far short they are.",
     },
     {
       key: "affordable_price_on_cash",
@@ -593,7 +597,7 @@ export const uaeMortgageAffordability: ModelDefinition = {
         ": null",
       format: "currency",
       unit: "AED",
-      help: "The highest price this buyer's cash covers, at the same LTV and fee assumptions.",
+      help: "The highest price this buyer could complete on with the cash they have, keeping the same deposit percentage and fees. Useful when the cash falls short of the property they asked about.",
     },
     {
       key: "cost_to_price_ratio",
@@ -601,6 +605,7 @@ export const uaeMortgageAffordability: ModelDefinition = {
       group: "Cash to complete",
       formula: "total_transaction_costs / property_price",
       format: "percent",
+      help: "The fees expressed as a share of the purchase price, so it can be compared across deals of different sizes.",
     },
   ],
 

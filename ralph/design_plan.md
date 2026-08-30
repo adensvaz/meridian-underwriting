@@ -137,3 +137,39 @@ here adds ornament — see `docs/CINEMATIC.md` §1.
 - A custom typeface. No downloaded assets, and the system stacks are correct.
 - Dark/light auto-switching on time of day. Cute, and it would fight the
   viewer's explicit choice.
+
+## Explain every field (round 2)
+
+The audience is not a finance person. Every label on screen — "Debt burden
+ratio", "Loan to value achieved", "Binding constraint" — is jargon to the person
+who most needs to understand it. Every input and every summary line on the
+mortgage model now carries plain-English `help` text, and the UI renders none of
+it.
+
+- [ ] **Surface `help` as a tooltip on every metric and field label.** The data
+      is already there — `ComputedValue.help` and `InputDef.help` come through
+      the API on every line. Attach it to the KPI tile eyebrow, the computed-line
+      rows, the review-screen field labels and the assumptions panel.
+      Requirements, all binding:
+      - Trigger on **hover AND focus AND tap**. A broker on an iPad must get it.
+      - Keyboard reachable: the trigger is a real `<button>` in the tab order
+        with `aria-describedby`, not a `title` attribute and not a `div`.
+      - Dismiss on Escape and on outside click.
+      - Positioned so it never leaves the viewport at 375px.
+      - Restrained per `DESIGN.md`: a 1px dotted underline on the label as the
+        only affordance, popover on `--bg-300` with a hairline, `caption` type,
+        measure capped at 44ch. No icon, no question-mark circle, no animation
+        beyond a 90ms fade.
+- [ ] **A plain-language subtitle under each headline metric.** The tooltip is
+      for the curious; the tile should carry a short line for everyone. Six to
+      ten words under the value — "the most a bank will lend", "everything
+      needed in cash on the day". Derive it from the first clause of `help`
+      rather than authoring a second copy that can drift.
+- [ ] **`Tenure not set` appears on a mortgage case.** Visible in the deal
+      header beside "Dubai Marina · Mortgage". Tenure is a property-title
+      concept and means nothing for a buyer assessment. Suppress the whole
+      metadata item when the deal's asset type is `mortgage`, rather than
+      printing "not set".
+- [ ] **Group labels need the same treatment.** "Borrowing capacity",
+      "Cash to complete", "Affordability" head the computed sections and are
+      not self-explanatory to a first-time reader.
