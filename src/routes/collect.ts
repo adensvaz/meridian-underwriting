@@ -26,10 +26,17 @@ import {
   resolveChecklist,
   resolveRequestToken,
   revokeRequest,
+  type Employment,
+  type Purchase,
+  type Residency,
 } from "../lib/collect.ts";
 import { storeAndParse } from "../lib/pipeline.ts";
 import { audit, getDeal } from "../lib/db/repo.ts";
 import { get } from "../lib/db/index.ts";
+
+const RESIDENCIES: Residency[] = ["uae_national", "expat_resident", "non_resident"];
+const EMPLOYMENTS: Employment[] = ["salaried", "self_employed"];
+const PURCHASES: Purchase[] = ["ready", "off_plan"];
 
 function baseUrlOf(ctx: Ctx): string {
   const host = ctx.req.headers.host ?? `localhost:${env.port}`;
@@ -49,6 +56,7 @@ export function registerCollectRoutes(router: Router): void {
       kind?: "mortgage" | "acquisition";
       employment?: "salaried" | "self_employed";
       residency?: "uae_national" | "expat_resident" | "non_resident";
+      purchase?: "ready" | "off_plan";
       items?: string[];
       ttlDays?: number;
     }>(ctx.req);
@@ -65,6 +73,7 @@ export function registerCollectRoutes(router: Router): void {
         body.residency === "non_resident" || body.residency === "uae_national"
           ? body.residency
           : undefined,
+      purchase: body.purchase === "off_plan" ? "off_plan" : undefined,
       items: Array.isArray(body.items) ? body.items.slice(0, 40) : undefined,
       ttlDays: typeof body.ttlDays === "number" ? body.ttlDays : undefined,
       baseUrl: baseUrlOf(ctx),
@@ -90,27 +99,33 @@ export function registerCollectRoutes(router: Router): void {
     noContent(ctx.res);
   });
 
-  /** The checklist templates, so the UI does not hard-code them. */
+  /**
+   * The checklist templates, so the UI does not hard-code them.
+   *
+   * Every combination of the three axes, so the UI can preview the exact list a
+   * given applicant will see without a round trip per toggle. Built by walking
+   * the axis unions rather than written out, so a fourth axis cannot be added to
+   * `ChecklistItem` and forgotten here.
+   */
   router.get("/api/collect/checklists", (ctx) => {
-    json(ctx.res, 200, {
-      // Every combination, so the UI can preview the exact list a given
-      // applicant will see without a round trip per toggle.
-      mortgage: {
-        expat_resident: {
-          salaried: resolveChecklist("mortgage", "salaried", undefined, "expat_resident"),
-          self_employed: resolveChecklist("mortgage", "self_employed", undefined, "expat_resident"),
-        },
-        uae_national: {
-          salaried: resolveChecklist("mortgage", "salaried", undefined, "uae_national"),
-          self_employed: resolveChecklist("mortgage", "self_employed", undefined, "uae_national"),
-        },
-        non_resident: {
-          salaried: resolveChecklist("mortgage", "salaried", undefined, "non_resident"),
-          self_employed: resolveChecklist("mortgage", "self_employed", undefined, "non_resident"),
-        },
-      },
-      acquisition: resolveChecklist("acquisition"),
-    });
+    const mortgage: Record<string, Record<string, Record<string, unknown>>> = {};
+    for (const residency of RESIDENCIES) {
+      mortgage[residency] = {};
+      for (const employment of EMPLOYMENTS) {
+        mortgage[residency][employment] = {};
+        for (const purchase of PURCHASES) {
+          mortgage[residency][employment][purchase] = resolveChecklist(
+            "mortgage",
+            employment,
+            undefined,
+            residency,
+            purchase,
+          );
+        }
+      }
+    }
+
+    json(ctx.res, 200, { mortgage, acquisition: resolveChecklist("acquisition") });
   });
 
   // ------------------------------------------------------------ buyer side --

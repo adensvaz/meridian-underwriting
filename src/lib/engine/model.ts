@@ -245,6 +245,7 @@ export function runModel(options: RunOptions): RunResult {
       unit: input.unit,
       help: input.help,
       origin,
+      required: input.required === true,
       confidence: hit?.confidence ?? null,
       sourceDocumentId: hit?.sourceDocumentId ?? null,
       sourcePage: hit?.sourcePage ?? null,

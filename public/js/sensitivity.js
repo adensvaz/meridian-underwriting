@@ -501,14 +501,17 @@ function customPanel(ctx, onRun) {
 // ------------------------------------------------------------------ the grid --
 
 function buildGrid(ctx, section, presets) {
-  const twoD = presets.filter((p) => p.dimensions === 2);
-  const firstAvailable = twoD.find((p) => p.available);
+  // Only the grids that can actually run. Listing "Exit yield x rent growth —
+  // unavailable", "Price x rent — unavailable" and "LTV x interest rate —
+  // unavailable" to a mortgage broker is four lines of somebody else's
+  // vocabulary and nothing they can do with any of it; selecting one could only
+  // ever produce an error panel. A shipped grid that cannot run is not an
+  // option, so it is not offered.
+  const twoD = presets.filter((p) => p.dimensions === 2 && p.available);
+  const firstAvailable = twoD[0] || null;
 
   const presetOptions = [
-    ...twoD.map((p) => ({
-      value: p.key,
-      label: p.available ? p.label : `${p.label} — unavailable`,
-    })),
+    ...twoD.map((p) => ({ value: p.key, label: p.label })),
     { value: CUSTOM, label: "Custom grid" },
   ];
 
@@ -602,7 +605,9 @@ function buildGrid(ctx, section, presets) {
     section,
     sectionHead(
       "Sensitivity",
-      "Every cell is a full model run against the saved deal — nothing is interpolated.",
+      twoD.length
+        ? "Every cell is a full model run against the saved deal — nothing is interpolated."
+        : "None of the shipped grids apply to this model, so build your own over any two of its inputs. Every cell is a full model run — nothing is interpolated.",
     ),
     toolbar,
     custom.node,
@@ -621,12 +626,13 @@ function buildCheque(ctx, section, preset) {
     return;
   }
 
+  // A model with no cheque count has no cheque structure to vary. Rendering a
+  // "Cheque structure · Dubai-specific" heading over an explanation of why it
+  // cannot run puts post-dated rent cheques in front of a mortgage applicant
+  // who is not letting anything to anybody — and in front of a US multifamily
+  // deal, where the instrument does not exist either.
   if (!preset.available) {
-    replace(
-      section,
-      sectionHead("Cheque structure", "Dubai-specific"),
-      empty("Not available for this model", preset.reason || "This model has no cheque count input."),
-    );
+    clear(section);
     return;
   }
 

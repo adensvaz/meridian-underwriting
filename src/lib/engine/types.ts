@@ -209,6 +209,16 @@ export interface ResolvedInput {
   help?: string;
   /** Where the value actually came from, for the provenance column. */
   origin: "user" | "extracted" | "default" | "missing";
+  /**
+   * Carried through from the InputDef. A model marks an input required when the
+   * answer is the case rather than an assumption about it — a purchase price, an
+   * applicant's income. Every shipped model also gives those inputs a default,
+   * which means the blocking warning for a missing required input can never
+   * fire, and a case with nothing in it computes a complete, plausible,
+   * meaningless result. The UI needs `required` together with `origin` to say
+   * so; without it the screen cannot tell an assumption apart from an answer.
+   */
+  required?: boolean;
   confidence?: number | null;
   sourceDocumentId?: string | null;
   sourcePage?: number | null;

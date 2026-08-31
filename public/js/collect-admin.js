@@ -260,8 +260,13 @@ function newRequestForm(ctx, checklists, onCreated, onCancel) {
 
   function currentItems() {
     if (kindSelect.control.value === "acquisition") return checklists.acquisition || [];
-    const bucket = checklists.mortgage || {};
-    return bucket[employmentSelect.control.value] || [];
+    // The payload is nested residency-first, because what a buyer is asked for
+    // depends on where they live before it depends on how they earn: a
+    // non-resident holds no Emirates ID whether salaried or self-employed.
+    const byResidency = checklists.mortgage || {};
+    const byEmployment = byResidency[ctx.residency] || byResidency.expat_resident || {};
+    const byPurchase = byEmployment[employmentSelect.control.value] || {};
+    return byPurchase[ctx.purchase || "ready"] || byPurchase.ready || [];
   }
 
   function syncPreview() {
@@ -532,7 +537,7 @@ function coveragePanel(ctx, requests, itemsByKey) {
  * Fill the Collect tab.
  *
  * @param {HTMLElement} panel
- * @param {{dealId:string, assetType:string, documents:Array}} ctx
+ * @param {{dealId:string, assetType:string, residency:string, purchase:string, documents:Array}} ctx
  */
 export async function renderCollect(panel, ctx) {
   const head = el("div", { class: "section" }, sectionHead("Collection links", "Loading"));
@@ -552,12 +557,17 @@ export async function renderCollect(panel, ctx) {
     return;
   }
 
+  // Every item across every combination, so a request issued under one profile
+  // still renders its labels after the profile changes.
   const itemsByKey = new Map();
-  for (const item of [
-    ...(checklists.mortgage?.salaried || []),
-    ...(checklists.mortgage?.self_employed || []),
-    ...(checklists.acquisition || []),
-  ]) {
+  // Three nested axes — residency, employment, purchase type — flattened so a
+  // request issued under any combination still renders its labels.
+  const everyMortgageItem = Object.values(checklists.mortgage || {}).flatMap((byEmployment) =>
+    Object.values(byEmployment || {}).flatMap((byPurchase) =>
+      Array.isArray(byPurchase) ? byPurchase : Object.values(byPurchase || {}).flat(),
+    ),
+  );
+  for (const item of [...everyMortgageItem, ...(checklists.acquisition || [])]) {
     if (!itemsByKey.has(item.key)) itemsByKey.set(item.key, item);
   }
 

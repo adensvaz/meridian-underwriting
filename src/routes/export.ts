@@ -62,7 +62,7 @@ export function registerExportRoutes(router: Router): void {
     (ctx) => {
       const bundle = bundleForDeal(ctx, ctx.params.id);
       const body = Buffer.from(buildCsv(bundle), "utf8");
-      const filename = exportFilename(bundle.deal.name, "csv");
+      const filename = exportFilename(bundle.deal.name, "csv", bundle.deal.assetType);
 
       repo.audit(ctx.user, "deal.exported", "deal", bundle.deal.id, { format: "csv", runId: bundle.run.id }, ctx.ip);
 
@@ -83,7 +83,7 @@ export function registerExportRoutes(router: Router): void {
 
 function sendWorkbook(ctx: Ctx, bundle: ExportBundle): void {
   const body = buildWorkbook(bundle);
-  const filename = exportFilename(bundle.deal.name, "xlsx");
+  const filename = exportFilename(bundle.deal.name, "xlsx", bundle.deal.assetType);
 
   repo.audit(ctx.user, "deal.exported", "deal", bundle.deal.id, { format: "xlsx", runId: bundle.run.id }, ctx.ip);
 

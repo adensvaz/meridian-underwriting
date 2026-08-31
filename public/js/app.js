@@ -503,6 +503,13 @@ function mortgageIntakeForm() {
       "Assess a buyer",
       "What you already know from the first call. Anything you leave blank stays blank — you can fill it in later, or collect it from the buyer's documents.",
     ),
+    // Said before the income field is filled in, not after the number is out.
+    el(
+      "div",
+      { class: "flag flag--dd", css: { "margin-block-end": "var(--s-16)" } },
+      el("div", { class: "flag__title", text: SINGLE_APPLICANT_TITLE }),
+      el("p", { class: "flag__body", text: SINGLE_APPLICANT_NOTE }),
+    ),
     el(
       "div",
       { class: "grid grid--tight" },
@@ -755,10 +762,17 @@ function dealTable() {
     wrap.classList.remove("tbl-wrap");
     wrap.append(
       empty(
-        state.filter ? "No match" : "No deals yet",
+        state.filter ? "No match" : "Nothing here yet",
         state.filter
           ? "Nothing in the pipeline matches that filter."
-          : "Create a deal, drop in the offering memorandum, rent roll and T12, and run extraction.",
+          : // The list holds both jobs, so its advice has to. Told to drop in an
+            // offering memorandum, rent roll and T12, a mortgage broker with an
+            // applicant and no property has been handed somebody else's
+            // instructions. Gated on the same test the intake uses to decide
+            // whether to offer both modes at all.
+            state.models.some((m) => m.assetType === "mortgage")
+            ? "Underwrite a property from its offering memorandum, rent roll and T12 — or assess a buyer for a mortgage from their income, age and documents."
+            : "Create a deal, drop in the offering memorandum, rent roll and T12, and run extraction.",
       ),
     );
     return wrap;
@@ -891,6 +905,28 @@ async function refreshResult({ overrides, depth, modelId, silent } = {}) {
   }
 }
 
+/**
+ * The strip under the case name.
+ *
+ * Tenure is a property-title concept — freehold, leasehold, musataha. It says
+ * how an asset is held. A mortgage case is a person, and the header used to
+ * print "Tenure not set" on one, which is not an empty field: it is a question
+ * that was never asked and has no answer. The item is dropped rather than
+ * softened, because relabelling it to something vague enough to be true of both
+ * jobs would only make the header say less on the deals where it matters.
+ *
+ * Community stays on both. Where a buyer is purchasing is a real fact about a
+ * mortgage case, and "not set" there is an honest blank.
+ */
+function headerMeta(deal) {
+  const meta = [deal.community || "Community not set", humanise(deal.assetType)];
+  if (deal.assetType !== "mortgage") {
+    meta.push(deal.tenure ? humanise(deal.tenure) : "Tenure not set");
+  }
+  meta.push(deal.currency, `Updated ${formatDate(deal.updatedAt)}`);
+  return meta;
+}
+
 function renderDeal(tab) {
   const deal = state.detail.deal;
   live.reset();
@@ -911,11 +947,7 @@ function renderDeal(tab) {
       el(
         "div",
         { class: "page-head__meta t-caption" },
-        el("span", { text: deal.community || "Community not set" }),
-        el("span", { text: humanise(deal.assetType) }),
-        el("span", { text: deal.tenure ? humanise(deal.tenure) : "Tenure not set" }),
-        el("span", { text: deal.currency }),
-        el("span", { text: `Updated ${formatDate(deal.updatedAt)}` }),
+        ...headerMeta(deal).map((text) => el("span", { text })),
       ),
     ),
     el(
@@ -923,7 +955,11 @@ function renderDeal(tab) {
       { class: "page-head__actions no-print" },
       pill(String(deal.status || "draft").toUpperCase(), STATUS_TONE[deal.status] || "neu"),
       exportMenu(deal.id, Boolean(state.runId)),
-      button("Print IC pack", { variant: "secondary", iconName: "print", onClick: () => window.print() }),
+      button(deal.assetType === "mortgage" ? "Print assessment" : "Print IC pack", {
+        variant: "secondary",
+        iconName: "print",
+        onClick: () => window.print(),
+      }),
     ),
   );
 
@@ -959,7 +995,11 @@ function exportMenu(dealId, hasRun) {
     { class: "exp__menu overlay", role: "menu", hidden: true },
     hasRun
       ? frag(
-          item("Excel workbook", `${base}.xlsx`, "xlsx · 8 sheets"),
+          // "8 sheets" was a constant. The workbook has never always had eight:
+          // the projection sheet only exists when the model projects, and a
+          // mortgage assessment has no rent roll or T12 to ship. Describing
+          // what is in the file beats counting tabs wrongly.
+          item("Excel workbook", `${base}.xlsx`, "xlsx · every figure with its provenance"),
           item("Flat CSV", `${base}.csv`, "csv · one row per line"),
         )
       : el("div", { class: "exp__empty t-caption c-3" }, el(
@@ -1050,6 +1090,10 @@ function collectContext() {
   return {
     dealId: deal.id,
     assetType: deal.assetType,
+    // Read off the case so the preview shows the list this applicant will
+    // actually receive, rather than the resident default.
+    residency: applicantResidency(),
+    purchase: applicantPurchase(),
     documents: state.detail.documents || [],
   };
 }
@@ -1082,7 +1126,7 @@ const PROPERTY_SLOTS = [
 // non-resident holds no Emirates ID and no UAE visa, banks overseas, and faces
 // heavier source-of-funds scrutiny. Naming documents they cannot produce reads
 // as the tool not knowing who they are.
-function mortgageSlots(residency) {
+function mortgageSlots(residency, offPlan) {
   const nonResident = residency === "non_resident";
   return [
     {
@@ -1115,21 +1159,86 @@ function mortgageSlots(residency) {
         ? "Where the deposit came from, plus any loans or cards"
         : "Liability letter and credit card statements · if any",
     },
-    { kind: "om", label: "Property papers", hint: "MOU or Form F, title deed or Oqood · once there is one" },
+    // Off-plan there is no seller, no Form F and no title deed — the developer
+    // holds the title until handover. Offering both halves and letting the
+    // broker work out which applies is how a buyer gets chased for a document
+    // that does not exist.
+    {
+      kind: "om",
+      label: "Property papers",
+      hint: offPlan
+        ? "Developer SPA with the payment plan, and the Oqood · once there is one"
+        : "MOU or Form F, and the title deed · once there is one",
+    },
   ];
 }
 
-/** Reads the applicant profile off the case rather than asking again. */
-function applicantResidency() {
+/**
+ * Meridian assesses ONE applicant. The model has one income, one age at
+ * maturity and one set of commitments, and a joint application — two salaries,
+ * two sets of documents, two liability positions — is extremely common in
+ * Dubai and cannot be expressed.
+ *
+ * The dangerous failure is the silent one: a broker with a couple in front of
+ * them types the household income into a field labelled "Gross monthly income"
+ * and gets back a maximum borrowing that reads like a household number. The
+ * second-worst is the plausible workaround — putting the co-applicant's salary
+ * into "Other monthly income", which the model haircuts as non-salary income
+ * and which still takes the term from the named applicant's age.
+ *
+ * Until a second applicant is modelled, the product says so, at the two moments
+ * a broker could act on it: when the case is created, and above the figure the
+ * assessment produces. The wording is one string so the two cannot drift.
+ */
+const SINGLE_APPLICANT_TITLE = "One applicant";
+const SINGLE_APPLICANT_NOTE =
+  "Meridian assesses a single applicant — one income, one age at maturity, one set of " +
+  "commitments. A joint application is not modelled. Do not add a co-applicant's salary " +
+  "to other income: it is haircut as non-salary income and the term is still taken from " +
+  "the named applicant's age. Assess each applicant separately and read this as the " +
+  "named applicant's own capacity.";
+
+function singleApplicantNotice() {
+  return el(
+    "div",
+    { class: "section" },
+    el(
+      "div",
+      { class: "flag flag--dd" },
+      el("div", { class: "flag__title", text: SINGLE_APPLICANT_TITLE }),
+      el("p", { class: "flag__body", text: SINGLE_APPLICANT_NOTE }),
+    ),
+  );
+}
+
+/** Reads a field off the case rather than asking for it again. */
+function caseField(key) {
   const fields = (state.detail && state.detail.fields) || [];
-  const row = fields.find((f) => f.key === "applicant_type");
+  const row = fields.find((f) => f.key === key);
+  return row ? (row.userValue ?? row.aiValue) : null;
+}
+
+/** Off-plan changes which property papers exist: Oqood and an SPA, not an MOU. */
+function applicantPurchase() {
+  const fields = (state.detail && state.detail.fields) || [];
+  const row = fields.find((f) => f.key === "is_off_plan");
   const value = row ? (row.userValue ?? row.aiValue) : null;
+  return value === true || value === "true" || value === "1" ? "off_plan" : "ready";
+}
+
+function applicantResidency() {
+  const value = caseField("applicant_type");
   return value === "non_resident" || value === "uae_national" ? value : "expat_resident";
+}
+
+/** `is_off_plan` already drives the 50% LTV cap; the document ask follows it. */
+function applicantOffPlan() {
+  return /^(y|yes|true|1)$/i.test(String(caseField("is_off_plan") ?? ""));
 }
 
 function slotsFor(deal) {
   if (!deal || deal.assetType !== "mortgage") return PROPERTY_SLOTS;
-  return mortgageSlots(applicantResidency());
+  return mortgageSlots(applicantResidency(), applicantOffPlan());
 }
 
 function renderDocuments(panel) {
@@ -1671,7 +1780,14 @@ function renderReview(panel) {
   state.justExtracted = false;
 
   if (state.extractionSummaries && state.extractionSummaries.length) {
-    body.append(el("div", { class: "section" }, sectionHead("Extraction pass"), summaryStrip(state.extractionSummaries)));
+    body.append(
+      el(
+        "div",
+        { class: "section" },
+        sectionHead("Extraction pass"),
+        summaryStrip(state.extractionSummaries, state.detail.deal),
+      ),
+    );
   }
 
   const inputs = (result.inputs || []).filter((i) => !i.hidden);
@@ -1718,7 +1834,12 @@ function renderReview(panel) {
     body.append(el("div", { class: "section" }, sectionHead("T12", `${t12.length} line${t12.length === 1 ? "" : "s"}`), t12Table(t12)));
   }
 
-  if (!units.length && !t12.length) {
+  // "Extraction did not find a rent roll or a trailing-twelve statement" is
+  // worth saying on a property deal — those documents were expected and are
+  // missing. On a mortgage case they were never part of the transaction, and a
+  // section headed "Rent roll and T12" is an empty shell of somebody else's
+  // job. The tab ends after the field ledger instead.
+  if (!units.length && !t12.length && state.detail.deal.assetType !== "mortgage") {
     body.append(
       el(
         "div",
@@ -1733,7 +1854,15 @@ function renderReview(panel) {
   }
 }
 
-function summaryStrip(summaries) {
+function summaryStrip(summaries, deal) {
+  // "0 units · 0 lines" is a finding on a property deal — the rent roll and the
+  // T12 were expected. On a passport and a salary certificate it is a tally of
+  // two things nobody was counting.
+  const tally = (s) =>
+    deal && deal.assetType === "mortgage"
+      ? `${s.fieldCount} field${s.fieldCount === 1 ? "" : "s"}`
+      : `${s.fieldCount} fields · ${s.unitCount} units · ${s.t12Count} lines`;
+
   return el(
     "div",
     { class: "stack stack--8" },
@@ -1745,7 +1874,7 @@ function summaryStrip(summaries) {
         el("span", { class: "fileplate__name u-truncate", text: s.filename }),
         tag(String(s.kind || "").replace(/_/g, " ")),
         tag(s.engine || "rules", s.ok ? undefined : "manual"),
-        el("span", { class: "fileplate__size", text: `${s.fieldCount} fields · ${s.unitCount} units · ${s.t12Count} lines` }),
+        el("span", { class: "fileplate__size", text: tally(s) }),
         el("span", { class: "fileplate__size", text: formatDurationMs(s.durationMs) }),
       ),
     ),
@@ -2321,26 +2450,40 @@ function t12Table(lines) {
 function renderUnderwriting(panel) {
   const deal = state.detail.deal;
   const result = state.result;
+  // A broker does not underwrite; the lender does. What the broker runs, and
+  // what they hand the buyer, is an assessment.
+  const mortgage = deal.assetType === "mortgage";
 
-  const depthToggle = el(
-    "div",
-    { class: "segmented no-print", role: "group", "aria-label": "Underwriting depth" },
-    [["quick", "Quick"], ["full", "Full"]].map(([value, label]) =>
-      el("button", {
-        type: "button",
-        text: label,
-        "aria-pressed": deal.depth === value ? "true" : "false",
-        on: {
-          click: async () => {
-            if (deal.depth === value) return;
-            deal.depth = value;
-            await refreshResult({ depth: value, silent: true });
-            renderTab("underwriting", panel);
-          },
-        },
-      }),
-    ),
-  );
+  // Depth has exactly one effect in the engine: at "quick" the multi-year
+  // projection is suppressed. A model that declares no projection therefore
+  // computes the same answer at both settings, and offering a broker a choice
+  // between two identical results — on a model that has no hold period, no exit
+  // and no years to project — is a control that does nothing but imply there is
+  // more to see. Shown when the selected model actually has a projection.
+  const selectedModel = (state.detail.models || []).find((m) => m.id === deal.modelId);
+  const depthMatters = Boolean(selectedModel && selectedModel.hasProjection);
+
+  const depthToggle = depthMatters
+    ? el(
+        "div",
+        { class: "segmented no-print", role: "group", "aria-label": "Underwriting depth" },
+        [["quick", "Quick"], ["full", "Full"]].map(([value, label]) =>
+          el("button", {
+            type: "button",
+            text: label,
+            "aria-pressed": deal.depth === value ? "true" : "false",
+            on: {
+              click: async () => {
+                if (deal.depth === value) return;
+                deal.depth = value;
+                await refreshResult({ depth: value, silent: true });
+                renderTab("underwriting", panel);
+              },
+            },
+          }),
+        ),
+      )
+    : null;
 
   const modelSelect = selectField(
     "uw-model",
@@ -2354,7 +2497,8 @@ function renderUnderwriting(panel) {
     renderTab("underwriting", panel);
   });
 
-  const runButton = button("Run underwriting", {
+  const runLabel = mortgage ? "Run assessment" : "Run underwriting";
+  const runButton = button(runLabel, {
     variant: "primary",
     iconName: "rerun",
     onClick: async () => {
@@ -2369,7 +2513,7 @@ function renderUnderwriting(panel) {
         state.reveal = true;
         renderDeal("underwriting");
       } catch (err) {
-        setLoading(runButton, false, "Run underwriting");
+        setLoading(runButton, false, runLabel);
         panel.prepend(
           el(
             "div",
@@ -2386,7 +2530,7 @@ function renderUnderwriting(panel) {
     el(
       "div",
       { class: "toolbar no-print" },
-      el("span", { class: "t-label c-3", text: "Depth" }),
+      depthMatters ? el("span", { class: "t-label c-3", text: "Depth" }) : null,
       depthToggle,
       el("span", { class: "t-label c-3", text: "Model" }),
       el("div", { css: { "min-inline-size": "260px" } }, modelSelect.node),
@@ -2399,14 +2543,25 @@ function renderUnderwriting(panel) {
   if (!result) {
     panel.append(
       empty(
-        "No underwriting yet",
-        state.resultError || "Select a model and run the underwriting.",
+        mortgage ? "No assessment yet" : "No underwriting yet",
+        state.resultError ||
+          (mortgage
+            ? "Select a model and run the assessment."
+            : "Select a model and run the underwriting."),
       ),
     );
     return;
   }
 
+  // Above the band, because it is about whether the band means anything.
+  append(panel, defaultsNotice(result, deal));
+
   panel.append(kpiBand(result));
+
+  // Stated under the figure it qualifies, and deliberately not `no-print`: the
+  // printed pack carries a maximum borrowing to a client, and the scope of that
+  // number has to travel with it.
+  if (deal.assetType === "mortgage") panel.append(singleApplicantNotice());
 
   const blocking = (result.warnings || []).filter((w) => w.level === "blocking");
   if (blocking.length) {
@@ -2439,6 +2594,54 @@ function renderUnderwriting(panel) {
   panel.append(sensitivitySection(analysisContext()));
 
   panel.append(assumptionsPanel(result, panel));
+}
+
+/**
+ * Every shipped model marks a handful of inputs `required` — the ones that are
+ * the case rather than an assumption about it: the purchase price, the
+ * applicant's income. Every one of them also carries a default, so the engine's
+ * blocking warning for a missing required input can never fire, and a case
+ * created with nothing but a name produces a complete, plausible, entirely
+ * fictional result. A broker who opens a new applicant and reads "Maximum
+ * borrowing AED 2,200,000" is reading the model's own placeholder income back
+ * to themselves.
+ *
+ * Nothing here changes a number. It reads `required` and `origin` — both
+ * already computed, both already on the wire — and says which figures are
+ * still the model talking rather than the case.
+ */
+function defaultsNotice(result, deal) {
+  const pending = (result.inputs || []).filter((i) => i.required && i.origin === "default");
+  if (!pending.length) return null;
+
+  const labels = pending.map((i) => i.label);
+  const list =
+    labels.length === 1
+      ? labels[0]
+      : `${labels.slice(0, -1).join(", ")} and ${labels[labels.length - 1]}`;
+  const mortgage = deal.assetType === "mortgage";
+
+  return el(
+    "div",
+    { class: "section" },
+    el(
+      "div",
+      { class: "flag" },
+      el("div", { class: "flag__title", text: "Answered by the model, not by this case" }),
+      el("p", {
+        class: "flag__body",
+        text:
+          `${list} ${pending.length === 1 ? "is" : "are"} still the model's own default. ` +
+          (mortgage
+            ? "Every figure below follows from those placeholders, so this is a worked example and not an assessment of this applicant. "
+            : "Every figure below follows from those placeholders, so this is a worked example and not an underwriting of this asset. ") +
+          "Type the real figures into Assumptions at the foot of this tab, or " +
+          (mortgage
+            ? "send the buyer a collection link and run extraction on what comes back."
+            : "upload the offering memorandum, rent roll and T12 and run extraction."),
+      }),
+    ),
+  );
 }
 
 function kpiBand(result) {
@@ -2477,7 +2680,7 @@ function kpiBand(result) {
     // something the figure cannot say: the threshold it is judged against.
     const benchmark = benchmarks.get(cv.key);
     const subText = benchmark
-      ? `${benchmark.direction === "lower" ? "Target ≤" : "Target ≥"} ${fmt(benchmark.good, cv.format, cv.precision)}`
+      ? `${benchmarkWords(benchmark).goodPrefix} ${fmt(benchmark.good, cv.format, cv.precision)}`
       : "";
 
     // The local helper, not Element.append — the native one stringifies a null
@@ -2610,6 +2813,30 @@ function projectionTable(projection) {
 
 const BENCH_TONE = { good: "pos", warn: "cau", bad: "neg", unknown: "neu" };
 
+/**
+ * What to call a benchmark's two thresholds.
+ *
+ * A benchmark carries `good` — where you want to be — and `warn` — the outer
+ * bound past which it fails. Both were being announced with the vocabulary of a
+ * higher-is-better metric: "Target ≤ 40.00%" under the debt burden ratio, and
+ * "≤ 40.00% target · 50.00% floor" on the gauge. Both are wrong, in different
+ * ways and in both flows.
+ *
+ * A target is something you aim for and want to exceed. Nobody aims for a debt
+ * burden ratio, or for a 15-year payback, or for a 40% OpEx ratio; 40% DBR is
+ * where a file is comfortable and 50% is the UAE Central Bank's ceiling. And a
+ * limit you must stay UNDER is not a floor — reading "50.00% floor" beside a
+ * regulatory cap inverts it exactly.
+ *
+ * Derived from `direction`, which every benchmark already declares, so a
+ * custom model gets the right words without saying anything extra.
+ */
+function benchmarkWords(benchmark) {
+  return benchmark.direction === "lower"
+    ? { goodPrefix: "Comfortable ≤", sign: "≤", goodNoun: "comfortable", warnNoun: "limit" }
+    : { goodPrefix: "Target ≥", sign: "≥", goodNoun: "target", warnNoun: "floor" };
+}
+
 function benchmarkPanel(result) {
   const benchmarks = result.benchmarks || [];
   const grid = el("div", { class: "grid grid--tight" });
@@ -2622,6 +2849,7 @@ function benchmarkPanel(result) {
 
   for (const benchmark of benchmarks) {
     const line = computed.get(benchmark.key);
+    const words = benchmarkWords(benchmark);
     const format = (line && line.format) || inferFormat(benchmark);
     const text = fmt(benchmark.value, format, line && line.precision);
     const readout = figureHost(text, { typeset: true });
@@ -2650,7 +2878,9 @@ function benchmarkPanel(result) {
             el("div", { class: "gauge-cell__val" }, readout),
             el("div", {
               class: "gauge-cell__cov",
-              text: `${benchmark.direction === "lower" ? "≤" : "≥"} ${fmt(benchmark.good, format)} target · ${fmt(benchmark.warn, format)} floor`,
+              text:
+                `${words.sign} ${fmt(benchmark.good, format)} ${words.goodNoun} · ` +
+                `${fmt(benchmark.warn, format)} ${words.warnNoun}`,
             }),
           ),
         ),
@@ -2661,7 +2891,14 @@ function benchmarkPanel(result) {
     );
   }
 
-  return el("div", { class: "section" }, sectionHead("Thresholds", "Covenant bands are marked on the arc."), grid);
+  // "Covenant" is a lending contract between a fund and a bank. The debt burden
+  // ratio is a regulator's ceiling on a person, and nobody covenanted to it.
+  return el(
+    "div",
+    { class: "section" },
+    sectionHead("Thresholds", "The comfortable band and the outer bound are marked on the arc."),
+    grid,
+  );
 }
 
 function inferFormat(benchmark) {
@@ -2765,6 +3002,10 @@ function metricText(key) {
 function renderAnalysis(panel) {
   const narrative = state.narrative;
   const result = state.result;
+  const mortgage = state.detail.deal.assetType === "mortgage";
+  // What the previous tab is called depends on the job, and this tab keeps
+  // pointing back at it.
+  const runNoun = mortgage ? "assessment" : "underwriting";
 
   const generate = button(narrative ? "Regenerate analysis" : "Generate analysis", {
     variant: narrative ? "secondary" : "primary",
@@ -2794,7 +3035,7 @@ function renderAnalysis(panel) {
     el(
       "div",
       { class: "toolbar no-print" },
-      el("span", { class: "t-label c-3", text: state.runId ? "Analysis" : "Run the underwriting first" }),
+      el("span", { class: "t-label c-3", text: state.runId ? "Analysis" : `Run the ${runNoun} first` }),
       el("div", { class: "spacer" }),
       generate,
     ),
@@ -2805,8 +3046,10 @@ function renderAnalysis(panel) {
       empty(
         "No write-up yet",
         state.runId
-          ? "Generate the analysis to get the headline, the strengths, the red flags and the due-diligence list."
-          : "Run the underwriting on the previous tab, then generate the analysis.",
+          ? mortgage
+            ? "Generate the analysis to get the headline, the strengths, the red flags and what has to be settled before submission."
+            : "Generate the analysis to get the headline, the strengths, the red flags and the due-diligence list."
+          : `Run the ${runNoun} on the previous tab, then generate the analysis.`,
       ),
     );
   } else {
@@ -2913,13 +3156,17 @@ function renderAnalysis(panel) {
   if (engineCards) panel.append(engineCards);
 
   if (narrative) {
+    // "Due diligence" is what a buy-side team calls the work before committing
+    // capital to an asset. A broker's equivalent list is the things that have to
+    // be true before the file goes to a lender, and they call it that.
+    const ddTitle = mortgage ? "Before submission" : "Due diligence";
     append(
       panel,
       cardStack("Strengths", narrative.strengths, "flag flag--strength", { fallbackTitle: "Strength" }),
       cardStack("Red flags", narrative.redFlags, "flag", { fallbackTitle: "Red flag" }),
-      cardStack("Due diligence", narrative.ddItems, "flag flag--dd", {
+      cardStack(ddTitle, narrative.ddItems, "flag flag--dd", {
         checkbox: true,
-        fallbackTitle: "Due diligence",
+        fallbackTitle: ddTitle,
       }),
     );
   }
@@ -2950,10 +3197,27 @@ function restoreDd() {
 // -------------------------------------------------------------------- print --
 
 /**
- * The IC pack. The print stylesheet already strips the chrome and reflows the
- * band and the tables; what paper needs and the screen does not is a masthead
- * and a stamp, so those are built for the print event and removed after it.
+ * The printed pack. The print stylesheet already strips the chrome and reflows
+ * the band and the tables; what paper needs and the screen does not is a
+ * masthead and a stamp, so those are built for the print event and removed
+ * after it.
+ *
+ * What the paper CALLS itself is not decoration. An investment committee pack
+ * is a document a fund puts in front of a committee to approve deploying
+ * capital into an asset. A broker printing a mortgage assessment is handing one
+ * buyer an indication of what they can borrow. Stamping the second with the
+ * masthead of the first is the plainest possible statement that the tool does
+ * not know which of its two jobs it is doing.
  */
+const PACK_TITLE = {
+  mortgage: "Meridian · Pre-approval indication",
+  property: "Meridian · Investment Committee pack",
+};
+
+function packTitle(deal) {
+  return deal.assetType === "mortgage" ? PACK_TITLE.mortgage : PACK_TITLE.property;
+}
+
 function wirePrint() {
   let head = null;
   let foot = null;
@@ -2972,7 +3236,12 @@ function wirePrint() {
         el("div", { class: "ic-sheet__title", text: deal.name }),
         el("div", {
           class: "ic-sheet__sub",
-          text: [deal.community, deal.city, humanise(deal.assetType), deal.tenure ? humanise(deal.tenure) : null]
+          text: [
+            deal.community,
+            deal.city,
+            deal.assetType === "mortgage" ? "Mortgage affordability" : humanise(deal.assetType),
+            deal.assetType === "mortgage" ? null : deal.tenure ? humanise(deal.tenure) : null,
+          ]
             .filter(Boolean)
             .join(" · "),
         }),
@@ -2980,7 +3249,7 @@ function wirePrint() {
       el(
         "div",
         { class: "ic-sheet__stamp" },
-        el("div", { text: "Meridian · Investment Committee pack" }),
+        el("div", { text: packTitle(deal) }),
         el("div", { text: `${today} · ${deal.currency}` }),
       ),
     );

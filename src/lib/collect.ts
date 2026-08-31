@@ -40,10 +40,19 @@ export interface ChecklistItem {
    */
   employment?: Employment[];
   residency?: Residency[];
+  /**
+   * Third independent axis: what is being bought. An off-plan buyer has no
+   * seller and no title deed — the developer holds the title until handover and
+   * the buyer holds an Oqood, the DLD's interim registration. Asking them for a
+   * title deed, or for a Form F that only exists on a resale, is the same class
+   * of error as asking a non-resident for an Emirates ID.
+   */
+  purchase?: Purchase[];
 }
 
 export type Employment = "salaried" | "self_employed";
 export type Residency = "uae_national" | "expat_resident" | "non_resident";
+export type Purchase = "ready" | "off_plan";
 
 const RESIDENTS: Residency[] = ["uae_national", "expat_resident"];
 
@@ -202,19 +211,45 @@ export const MORTGAGE_CHECKLIST: ChecklistItem[] = [
   },
 
   // ---- the property ---------------------------------------------------
+  //
+  // A resale and an off-plan purchase produce different paper. On a resale
+  // there is a seller, a Form F on the DLD portal and a title deed to inspect.
+  // Off-plan there is no seller and no title deed: the contract is the
+  // developer's SPA with its payment plan, and the buyer's registration is the
+  // Oqood. The case already knows which it is — `is_off_plan` drives the 50%
+  // LTV cap and fires its own flag — so the ask follows it rather than offering
+  // both and leaving the buyer to work out which half applies to them.
   {
     key: "property_mou",
     label: "Property MOU or Form F",
-    hint: "The signed sale agreement, once you have one. Not needed for a pre-approval.",
+    hint: "The signed sale agreement with the seller, once you have one. Not needed for a pre-approval.",
     kind: "om",
     required: false,
+    purchase: ["ready"],
   },
   {
     key: "title_deed",
-    label: "Title deed or Oqood",
-    hint: "The seller's title deed, or the Oqood certificate for an off-plan property.",
+    label: "Title deed",
+    hint: "The seller's title deed for the property you are buying.",
     kind: "om",
     required: false,
+    purchase: ["ready"],
+  },
+  {
+    key: "developer_spa",
+    label: "Developer sale agreement and payment plan",
+    hint: "The SPA you signed with the developer, including the instalment schedule. The bank needs to see which instalments fall due before the mortgage draws down.",
+    kind: "om",
+    required: false,
+    purchase: ["off_plan"],
+  },
+  {
+    key: "oqood",
+    label: "Oqood certificate",
+    hint: "The Dubai Land Department's interim registration for an off-plan unit, issued through the developer. There is no title deed until handover.",
+    kind: "om",
+    required: false,
+    purchase: ["off_plan"],
   },
 ];
 
@@ -273,11 +308,13 @@ export function resolveChecklist(
   employment: Employment = "salaried",
   keys?: string[],
   residency: Residency = "expat_resident",
+  purchase: Purchase = "ready",
 ): ChecklistItem[] {
   const base = checklistFor(kind).filter(
     (i) =>
       (!i.employment || i.employment.includes(employment)) &&
-      (!i.residency || i.residency.includes(residency)),
+      (!i.residency || i.residency.includes(residency)) &&
+      (!i.purchase || i.purchase.includes(purchase)),
   );
   if (!keys || !keys.length) return base;
   const wanted = new Set(keys);
@@ -292,9 +329,10 @@ export function resolveChecklist(
 export function applicantProfile(dealId: string): {
   employment: Employment;
   residency: Residency;
+  purchase: Purchase;
 } {
   const rows = all<{ field_key: string; ai_value: string | null; user_value: string | null }>(
-    "SELECT field_key, ai_value, user_value FROM extracted_fields WHERE deal_id = ? AND field_key IN ('employment_type','applicant_type')",
+    "SELECT field_key, ai_value, user_value FROM extracted_fields WHERE deal_id = ? AND field_key IN ('employment_type','applicant_type','is_off_plan')",
     dealId,
   );
   const read = (key: string): string | null => {
@@ -308,8 +346,11 @@ export function applicantProfile(dealId: string): {
     applicant === "non_resident" ? "non_resident"
     : applicant === "uae_national" ? "uae_national"
     : "expat_resident";
+  // Booleans round-trip through extracted_fields as strings, so this reads the
+  // same set of truthy spellings the client's own parser accepts.
+  const purchase: Purchase = /^(y|yes|true|1)$/i.test(read("is_off_plan") ?? "") ? "off_plan" : "ready";
 
-  return { employment, residency };
+  return { employment, residency, purchase };
 }
 
 // ------------------------------------------------------------------ tokens --
@@ -355,6 +396,7 @@ export function createDocumentRequest(
     kind?: "mortgage" | "acquisition";
     employment?: Employment;
     residency?: Residency;
+    purchase?: Purchase;
     items?: string[];
     ttlDays?: number;
     baseUrl?: string;
@@ -373,6 +415,7 @@ export function createDocumentRequest(
     options.employment ?? known.employment,
     options.items,
     options.residency ?? known.residency,
+    options.purchase ?? known.purchase,
   );
 
   const token = randomBytes(32).toString("base64url");
@@ -464,6 +507,25 @@ export function recordUpload(requestId: string, count: number): void {
   );
 }
 
+const RESIDENCY_WORDS: Record<Residency, string> = {
+  uae_national: "a UAE national",
+  expat_resident: "an expat resident",
+  non_resident: "a non-resident",
+};
+
+/** "a non-resident, self-employed, buying off-plan" — the whole current profile. */
+function describeProfile(p: {
+  employment: Employment;
+  residency: Residency;
+  purchase: Purchase;
+}): string {
+  return [
+    RESIDENCY_WORDS[p.residency],
+    p.employment === "self_employed" ? "self-employed" : "salaried",
+    p.purchase === "off_plan" ? "buying off-plan" : "buying a completed property",
+  ].join(", ");
+}
+
 export function listRequests(actor: AuthenticatedUser, dealId: string) {
   if (!getDeal(actor, dealId)) return [];
 
@@ -474,7 +536,13 @@ export function listRequests(actor: AuthenticatedUser, dealId: string) {
   // than letting the fixed bug walk back in through a stale link.
   const current = applicantProfile(dealId);
   const expected = new Set(
-    resolveChecklist("mortgage", current.employment, undefined, current.residency).map((i) => i.key),
+    resolveChecklist(
+      "mortgage",
+      current.employment,
+      undefined,
+      current.residency,
+      current.purchase,
+    ).map((i) => i.key),
   );
 
   return all<DocumentRequestRow>(
@@ -503,10 +571,15 @@ export function listRequests(actor: AuthenticatedUser, dealId: string) {
         : {
             asksForImpossible: impossible.length,
             missing: missing.length,
+            // Naming the CURRENT profile rather than guessing which axis moved.
+            // Asserting "sent before the applicant was recorded as a
+            // non-resident" when what actually changed was the off-plan flag
+            // would be the same class of wrong statement this whole track is
+            // for.
             note:
               impossible.length > 0
-                ? `This link was sent before the applicant was recorded as ${current.residency.replace("_", " ")}. It asks for ${impossible.length} document${impossible.length === 1 ? "" : "s"} they cannot provide. Revoke it and send a new one.`
-                : `The applicant profile changed after this link was sent, so it is missing ${missing.length} document${missing.length === 1 ? "" : "s"}. Send a new one.`,
+                ? `This link asks for ${impossible.length} document${impossible.length === 1 ? "" : "s"} that do not apply to ${describeProfile(current)}. The case was updated after the link was sent — revoke it and send a new one.`
+                : `The case was updated after this link was sent, so it is missing ${missing.length} document${missing.length === 1 ? "" : "s"} that ${describeProfile(current)} needs to provide. Send a new one.`,
           },
     // The token is deliberately absent. It was shown once at creation and
     // cannot be recovered — the broker re-issues rather than retrieves.

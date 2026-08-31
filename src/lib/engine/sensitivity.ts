@@ -441,6 +441,13 @@ interface PresetSpec {
   label: string;
   description: string;
   metricCandidates: string[];
+  /**
+   * What the grid reports, in English. The unavailable reason used to read
+   * "this model computes none of levered_irr, irr, unlevered_irr,
+   * equity_multiple" — a list of internal keys, shown to a mortgage broker who
+   * has never seen any of them and would not want three of them if they had.
+   */
+  reports: string;
   row: AxisTemplate;
   column?: AxisTemplate;
 }
@@ -462,6 +469,7 @@ export const PRESETS: PresetSpec[] = [
     description:
       "The classic committee table. Exit yield 100bps either side of the base case against rent growth from nil to 6%. Everything an equity return depends on that the buyer does not control.",
     metricCandidates: ["levered_irr", "irr", "unlevered_irr", "equity_multiple"],
+    reports: "an equity return — an IRR or an equity multiple",
     row: {
       candidates: ["exit_yield", "exit_cap_rate", "exit_cap", "terminal_cap_rate", "reversion_yield"],
       build: (base) => {
@@ -481,6 +489,7 @@ export const PRESETS: PresetSpec[] = [
     description:
       "Purchase price and passing rent 10% either side of the base case. The negotiation table: what you would have to pay, or achieve, for the yield to hold.",
     metricCandidates: ["net_yield", "gross_yield", "levered_irr", "cash_on_cash"],
+    reports: "a yield on the asset",
     row: {
       candidates: ["price", "purchase_price", "purchase_price_input", "acquisition_price"],
       build: (base) => {
@@ -504,6 +513,7 @@ export const PRESETS: PresetSpec[] = [
     description:
       "Leverage against the cost of it, reported on DSCR. This is the table the credit committee reads, not the equity one — it says at what point the facility stops clearing cover.",
     metricCandidates: ["dscr", "min_dscr", "debt_yield"],
+    reports: "a debt cover ratio — DSCR or debt yield",
     row: {
       candidates: ["ltv", "loan_to_value", "ltv_requested"],
       build: () => [0.5, 0.55, 0.6, 0.65, 0.7, 0.75],
@@ -519,6 +529,7 @@ export const PRESETS: PresetSpec[] = [
     description:
       "The same deal at 1, 2, 4, 6 and 12 rent cheques. A Dubai tenancy is paid in post-dated cheques handed over at signing, so fewer cheques means the landlord holds the cash earlier and the return improves without the headline rent moving at all. There is no equivalent line in a US or UK underwrite.",
     metricCandidates: ["cash_on_cash", "net_yield", "levered_irr", "effective_gross_income"],
+    reports: "a return or an income figure for the asset",
     row: {
       candidates: ["cheque_count", "cheques", "cheques_per_year", "rent_cheques"],
       build: (_base, input) => filterToOptions(input, [1, 2, 4, 6, 12]),
@@ -627,7 +638,7 @@ function resolvePreset(
   }
   if (!metric) {
     return {
-      reason: `this model computes none of ${spec.metricCandidates.join(", ")}, so there is nothing to report`,
+      reason: `this grid reports ${spec.reports}, and this model does not compute one`,
     };
   }
   if (metric.kind === "return" && definition.depth === "quick") {
@@ -637,7 +648,7 @@ function resolvePreset(
   const row = resolveTemplate(spec.row, inputs, base);
   if ("missing" in row) {
     return {
-      reason: row.reason ?? `this model has no ${spec.row.candidates.join(" / ")} input`,
+      reason: row.reason ?? `this model has no input the grid can move along its rows`,
     };
   }
 
@@ -646,7 +657,7 @@ function resolvePreset(
     const resolved = resolveTemplate(spec.column, inputs, base);
     if ("missing" in resolved) {
       return {
-        reason: resolved.reason ?? `this model has no ${spec.column.candidates.join(" / ")} input`,
+        reason: resolved.reason ?? `this model has no input the grid can move along its columns`,
       };
     }
     column = resolved;

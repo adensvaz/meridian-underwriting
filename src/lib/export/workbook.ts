@@ -304,8 +304,18 @@ export function contentDisposition(filename: string): string {
   return `attachment; filename="${ascii}"; filename*=UTF-8''${encodeURIComponent(filename)}`;
 }
 
-export function exportFilename(dealName: string, extension: "xlsx" | "csv"): string {
-  return `${sanitiseFilename(dealName)} underwriting.${extension}`;
+/**
+ * The filename is the first thing the recipient reads, before they open
+ * anything. "Sofia R — London, off-plan underwriting.xlsx" describes an asset
+ * being underwritten; what is in the file is one person's borrowing capacity.
+ */
+export function exportFilename(
+  dealName: string,
+  extension: "xlsx" | "csv",
+  assetType?: string | null,
+): string {
+  const noun = assetType === "mortgage" ? "mortgage assessment" : "underwriting";
+  return `${sanitiseFilename(dealName)} ${noun}.${extension}`;
 }
 
 // ------------------------------------------------------------------ lookups --
@@ -343,6 +353,16 @@ const HEADLINE: Array<{ label: string; keys: string[]; format: Format }> = [
 
 // ------------------------------------------------------------------ builders --
 
+/**
+ * The one place the workbook tells the two jobs apart. The deal's own asset
+ * type, not a count of rows: a property deal whose rent roll has not arrived
+ * still gets the sheet, because that is the shape of the document it is going
+ * to be. A mortgage assessment never will.
+ */
+function isMortgageBundle(deal: ExportDeal): boolean {
+  return deal.assetType === "mortgage";
+}
+
 function summarySheet(bundle: ExportBundle): WorkSheet {
   const { deal, run, result } = bundle;
   const currency = deal.currency;
@@ -362,21 +382,39 @@ function summarySheet(bundle: ExportBundle): WorkSheet {
     rows.push([txt(title), null, null]);
   };
 
-  rows.push([txt("Meridian — underwriting export"), txt(deal.name), null]);
+  // The identifying block describes the SUBJECT of the file, and that is not
+  // the same thing in the two flows. A mortgage assessment has no address and
+  // no tenure — there may be no property yet at all.
+  const mortgage = isMortgageBundle(deal);
 
-  section("Property");
-  pair("Deal", txt(deal.name));
-  pair("Address", txt(deal.address));
-  pair("Community", txt(deal.community));
-  pair("City", txt(deal.city));
-  pair("Country", txt(deal.country));
-  pair("Asset type", txt(deal.assetType));
-  pair("Tenure", txt(deal.tenure));
+  rows.push([
+    txt(mortgage ? "Meridian — mortgage affordability assessment" : "Meridian — underwriting export"),
+    txt(deal.name),
+    null,
+  ]);
+
+  if (mortgage) {
+    section("Applicant");
+    pair("Applicant", txt(deal.name));
+    pair("Target community", txt(deal.community));
+    pair("City", txt(deal.city));
+    pair("Country", txt(deal.country));
+    pair("Case type", txt("Mortgage affordability"));
+  } else {
+    section("Property");
+    pair("Deal", txt(deal.name));
+    pair("Address", txt(deal.address));
+    pair("Community", txt(deal.community));
+    pair("City", txt(deal.city));
+    pair("Country", txt(deal.country));
+    pair("Asset type", txt(deal.assetType));
+    pair("Tenure", txt(deal.tenure));
+  }
   pair("Market", txt(deal.market));
   pair("Currency", txt(currency));
   pair("Status", txt(deal.status));
 
-  section("Underwriting model");
+  section(mortgage ? "Assessment model" : "Underwriting model");
   pair("Model", txt(run.modelName));
   pair("Model key", txt(run.modelKey));
   pair("Model version", num(run.modelVersion, "0"));
@@ -716,9 +754,13 @@ function benchmarksSheet(bundle: ExportBundle): WorkSheet {
     unknown: "Not assessed",
   };
 
+  // Not "Target" and "Tolerance": many shipped benchmarks are lower-is-better
+  // — payback, OpEx ratio, debt burden ratio, LTV — and nobody targets those.
+  // `good` is where the metric is comfortable, `warn` the outer bound, in
+  // whichever direction the row declares.
   const rows: Matrix = [
     [
-      txt("Metric"), txt("Value"), txt("Target"), txt("Tolerance"),
+      txt("Metric"), txt("Value"), txt("Comfortable at"), txt("Outer bound"),
       txt("Direction"), txt("Grading"), txt("Note"),
     ],
   ];
@@ -751,13 +793,19 @@ function benchmarksSheet(bundle: ExportBundle): WorkSheet {
 export function buildWorkbookModel(bundle: ExportBundle): WorkBook {
   const wb = XLSX.utils.book_new();
 
+  // A "Rent roll" tab with unit numbers, lease dates and Ejari columns, and a
+  // "T12" tab with NOI inclusion flags, are two empty property documents on a
+  // mortgage assessment — and this is the file that gets emailed to a client.
+  // The sheets follow the case rather than the code.
+  const mortgage = isMortgageBundle(bundle.deal);
+
   const sheets: Array<[string, WorkSheet | null]> = [
     ["Summary", summarySheet(bundle)],
     ["Inputs", inputsSheet(bundle)],
-    ["Underwriting", underwritingSheet(bundle)],
+    [mortgage ? "Assessment" : "Underwriting", underwritingSheet(bundle)],
     ["Projection", projectionSheet(bundle)],
-    ["Rent roll", rentRollSheet(bundle)],
-    ["T12", t12Sheet(bundle)],
+    ["Rent roll", mortgage ? null : rentRollSheet(bundle)],
+    ["T12", mortgage ? null : t12Sheet(bundle)],
     ["Analysis", analysisSheet(bundle)],
     ["Benchmarks", benchmarksSheet(bundle)],
   ];

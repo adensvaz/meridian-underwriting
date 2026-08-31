@@ -473,13 +473,21 @@ export const uaeMortgageAffordability: ModelDefinition = {
       label: "Binding constraint",
       group: "Borrowing capacity",
       // A text line so the UI and the memo can say WHY, not just how much.
+      //
+      // Past the maturity age there is no term at all, so both the income
+      // ceiling and the deposit ceiling are nil and the income branch wins by
+      // default — which had the headline announcing "Income, with the term
+      // shortened by age" over a maximum borrowing of zero. Age is the binding
+      // constraint there, and it is named. No arithmetic changes: this line is
+      // display text and nothing reads it.
       formula:
-        "max_loan_by_income < max_loan_by_ltv " +
+        'term_by_age <= 0 ? "Age — no term is left before the maturity limit" : ' +
+        "(max_loan_by_income < max_loan_by_ltv " +
         '? (term_by_age < min(requested_term_years, max_term_years) ? "Income, with the term shortened by age" : "Income — the debt burden ratio") ' +
-        ': "Deposit — the loan-to-value ceiling"',
+        ': "Deposit — the loan-to-value ceiling")',
       format: "text",
       emphasis: "strong",
-      help: "Which of the two limits is holding this buyer back. \"Income\" means a bigger deposit will not increase the loan — they need more salary, fewer existing debts, or a longer term. \"Deposit\" means finding more cash will unlock a bigger loan.",
+      help: "Which limit is holding this buyer back. \"Income\" means a bigger deposit will not increase the loan — they need more salary, fewer existing debts, or a longer term. \"Deposit\" means finding more cash will unlock a bigger loan. \"Age\" means the applicant has already reached the age the loan must be repaid by, so there is no term to lend over at all.",
     },
     {
       key: "achieved_ltv",
@@ -678,15 +686,32 @@ export const uaeMortgageAffordability: ModelDefinition = {
       metric: "max_loan_by_income",
       dd: "Check whether documented rental or bonus income can be added, and whether a longer term is available within the age limit.",
     },
+    // Two flags, not one, because "the term is short" and "there is no term"
+    // are different pieces of news. One rule covering both produced "the term
+    // is capped at 0 years" for an applicant who is simply too old to borrow,
+    // and "capped at 1 years" for one who is nearly there.
     {
       id: "age_limited_term",
-      when: "term_by_age < min(requested_term_years, max_term_years)",
+      when: "term_by_age > 0 and term_by_age < min(requested_term_years, max_term_years)",
       severity: "amber",
       title: "Term shortened by age at maturity",
       detail:
-        "The term is capped at {eligible_term_years} years because the loan must be repaid by age {max_maturity_age}, against a requested {requested_term_years} years. A shorter term raises the payment and reduces borrowing capacity.",
+        "Repayment must finish by age {max_maturity_age}, which leaves {eligible_term_years} of the {requested_term_years} years requested. A shorter term raises the monthly payment and cuts borrowing capacity.",
       metric: "eligible_term_years",
-      dd: "Ask whether a lender offering a higher maturity age is available, or whether a younger co-applicant can be added.",
+      // A younger co-applicant is real advice at a lender, but Meridian cannot
+      // show it, and pointing at a capability the product does not have is its
+      // own kind of wrong answer.
+      dd: "Ask whether any lender on the panel underwrites to a higher maturity age. A younger co-applicant would help at the bank, but this assessment covers one applicant and cannot show that result.",
+    },
+    {
+      id: "past_maturity_age",
+      when: "term_by_age <= 0",
+      severity: "red",
+      title: "Applicant is at or past the maximum age at maturity",
+      detail:
+        "At {applicant_age} there is no term left before the age-at-maturity limit of {max_maturity_age}, so there is no period to lend over and the maximum borrowing is nil. The cash to complete shown here is therefore the whole price plus fees, not a deposit.",
+      metric: "applicant_age",
+      dd: "Check whether any lender on the panel underwrites beyond age {max_maturity_age}, and whether the purchase can proceed without a mortgage.",
     },
     {
       id: "card_limits_material",
@@ -749,5 +774,5 @@ export const uaeMortgageAffordability: ModelDefinition = {
   ],
 
   methodology:
-    "Maximum borrowing is the lower of two independent ceilings. The income ceiling is the present value of the affordable monthly payment — the debt burden ratio applied to assessed income, less existing commitments — discounted at a stressed rate over the eligible term. The deposit ceiling is the UAE Central Bank loan-to-value cap for the applicant's profile, the property price and whether the purchase is off-plan. The eligible term is the shortest of the requested term, the regulatory maximum and the years remaining to the maturity age. Cash to complete is the resulting deposit plus DLD, agency, mortgage registration, arrangement and fixed fees. Every threshold is an editable input, not a constant, so a broker can follow their lender's actual policy. This is an affordability indication for discussion, not a credit decision or a lending offer.",
+    "Maximum borrowing is the lower of two independent ceilings. The income ceiling is the present value of the affordable monthly payment — the debt burden ratio applied to assessed income, less existing commitments — discounted at a stressed rate over the eligible term. The deposit ceiling is the UAE Central Bank loan-to-value cap for the applicant's profile, the property price and whether the purchase is off-plan. The eligible term is the shortest of the requested term, the regulatory maximum and the years remaining to the maturity age. Cash to complete is the resulting deposit plus DLD, agency, mortgage registration, arrangement and fixed fees. Every threshold is an editable input, not a constant, so a broker can follow their lender's actual policy. The model covers a single applicant: one income, one age at maturity, one set of commitments. A joint application is not modelled, and a co-applicant's salary must not be entered as other income — it would be haircut as non-salary income and the term would still be taken from the named applicant's age. This is an affordability indication for discussion, not a credit decision or a lending offer.",
 };

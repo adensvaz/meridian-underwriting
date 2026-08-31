@@ -183,6 +183,16 @@ export interface ModelSummary {
   isDefault: boolean;
   editable: boolean;
   updatedAt: string;
+  /**
+   * Whether the definition declares a multi-year projection.
+   *
+   * Depth is the only thing that reads this: `runModel` suppresses the
+   * projection at "quick" and does nothing else with it, so on a model with no
+   * projection the Quick/Full control changes literally nothing. The UI needs
+   * to know that to avoid offering a mortgage broker a choice between two
+   * identical answers.
+   */
+  hasProjection: boolean;
 }
 
 function toModelSummary(row: ModelRow, actor: AuthenticatedUser): ModelSummary {
@@ -200,6 +210,7 @@ function toModelSummary(row: ModelRow, actor: AuthenticatedUser): ModelSummary {
     isDefault: row.is_default === 1,
     editable: row.is_system !== 1 && row.org_id === actor.org_id,
     updatedAt: row.updated_at,
+    hasProjection: Boolean(fromJson<ModelDefinition | undefined>(row.definition, undefined)?.projection),
   };
 }
 

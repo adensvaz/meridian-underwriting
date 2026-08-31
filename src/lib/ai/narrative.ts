@@ -19,7 +19,7 @@ import { structuredCall, aiAvailable } from "./client.ts";
 import type { BenchmarkResult, FlagResult, RunResult } from "../engine/types.ts";
 import { formatValue } from "../format.ts";
 
-export const NARRATIVE_PROMPT_VERSION = "narrative-2026-08-a";
+export const NARRATIVE_PROMPT_VERSION = "narrative-2026-08-b";
 
 export interface NarrativeItem {
   title: string;
@@ -61,6 +61,41 @@ MARKET CONTEXT YOU ARE EXPECTED TO APPLY
 - Property held by a natural person in a personal capacity is outside UAE corporate tax; property held in an entity is generally within it at 9% above AED 375,000.
 
 TONE: dry, senior, and specific. This memo goes in front of people who deploy their own capital.`;
+
+/**
+ * The mortgage brief is a different document for a different reader.
+ *
+ * The prompt above asks for an investment committee memo on an asset. Handed a
+ * mortgage affordability run it would write about cap rates, service charges and
+ * DSCR covenants on behalf of a buyer who owns nothing yet, for a committee that
+ * does not exist. A broker is producing a pre-approval indication for one person
+ * and taking it back to that person and to a bank.
+ */
+const MORTGAGE_SYSTEM_PROMPT = `You are a senior mortgage adviser at a Dubai brokerage, writing the assessment a broker gives a buyer and takes to a lender. This is a pre-approval INDICATION for one applicant, not a credit decision, not an offer, and not an investment paper.
+
+You are given the FULLY COMPUTED affordability output for one applicant: resolved inputs, calculated lines, benchmark gradings, and the constraints the engine has already fired deterministically.
+
+RULES
+
+1. Work only from the figures you are given. Do not compute new figures, do not restate a figure with a different value, and do not reference anything not in the data. Cite numbers exactly as provided.
+2. Never invent a risk. The engine's flags are established fact; your job is to explain what they mean for this buyer's chances and to add judgement the arithmetic cannot capture.
+3. Where an input is a model default rather than something the buyer or their documents supplied, say so. An affordability figure built on an assumed salary is not an assessment of anybody.
+4. Be specific and quantitative. "Affordability is tight" is worthless. "A debt burden ratio of 49% sits just inside the 50% Central Bank ceiling, so a single additional card limit would put the file outside policy" is useful.
+5. Say plainly which of the two ceilings binds — income or deposit — because that determines what the buyer should do next. More deposit does not raise an income-bound loan.
+6. Write for a broker who will read this in ninety seconds and then repeat it to a client on the phone. No preamble, no hedging.
+7. This assessment covers ONE applicant. Do not suggest combining incomes or refer to a household figure; a joint application is not modelled here.
+
+MARKET CONTEXT YOU ARE EXPECTED TO APPLY
+
+- UAE Central Bank regulation caps total debt service at 50% of assessed income. Under 40% is comfortable and clears underwriting faster.
+- Loan-to-value ceilings depend on the applicant: UAE nationals may borrow the most, expat residents less, non-residents least; a second property and an off-plan purchase are both capped harder, off-plan at roughly 50% whoever the buyer is.
+- The loan must be fully repaid by a maximum age at maturity, typically 65 salaried and 70 self-employed. For an older applicant this shortens the term, which raises the payment and cuts the maximum loan.
+- Credit card LIMITS are assessed as a monthly commitment at around 5% whether or not the balance is nil, so unused limits cost real borrowing capacity.
+- Buyer-side completion costs run roughly 6-8% of the price: 4% DLD transfer, ~2% agency, 0.25% mortgage registration, plus valuation, arrangement and conveyancing. Cash to complete is the deposit PLUS these, and buyers routinely underestimate it.
+- Affordability is tested at a stressed rate above the quoted one, because a fixed period reverts.
+- Only a subset of UAE banks lend to non-residents at all, and pricing is usually higher.
+
+TONE: dry, specific, and usable on a phone call. Never promise approval.`;
 
 const SCHEMA: Record<string, unknown> = {
   type: "object",
@@ -130,15 +165,26 @@ export interface NarrativeContext {
   modelName: string;
 }
 
+/** The one place the two jobs are told apart. Everything else follows it. */
+function isMortgage(ctx: NarrativeContext): boolean {
+  return ctx.assetType === "mortgage";
+}
+
 export async function generateNarrative(ctx: NarrativeContext): Promise<Narrative> {
   if (!aiAvailable()) {
     return { ...ruleBasedNarrative(ctx), engine: "rules" };
   }
 
+  const mortgage = isMortgage(ctx);
   const brief = renderBrief(ctx);
 
   const messages: Anthropic.MessageParam[] = [
-    { role: "user", content: `Write the investment committee analysis for this deal.\n\n${brief}` },
+    {
+      role: "user",
+      content: mortgage
+        ? `Write the pre-approval assessment for this applicant.\n\n${brief}`
+        : `Write the investment committee analysis for this deal.\n\n${brief}`,
+    },
   ];
 
   const result = await structuredCall<{
@@ -148,7 +194,7 @@ export async function generateNarrative(ctx: NarrativeContext): Promise<Narrativ
     red_flags: NarrativeItem[];
     dd_items: NarrativeItem[];
   }>({
-    system: SYSTEM_PROMPT,
+    system: mortgage ? MORTGAGE_SYSTEM_PROMPT : SYSTEM_PROMPT,
     messages,
     toolName: "record_analysis",
     toolDescription: "Record the deal analysis: headline, summary, strengths, red flags and due-diligence questions.",
@@ -195,9 +241,15 @@ function renderBrief(ctx: NarrativeContext): string {
   const { result, currency } = ctx;
   const lines: string[] = [];
 
-  lines.push(`PROPERTY: ${ctx.dealName}`);
-  if (ctx.community) lines.push(`COMMUNITY: ${ctx.community}`);
-  lines.push(`ASSET TYPE: ${ctx.assetType}`);
+  if (isMortgage(ctx)) {
+    lines.push(`APPLICANT: ${ctx.dealName}`);
+    if (ctx.community) lines.push(`TARGET COMMUNITY: ${ctx.community}`);
+    lines.push("CASE TYPE: residential mortgage affordability, single applicant");
+  } else {
+    lines.push(`PROPERTY: ${ctx.dealName}`);
+    if (ctx.community) lines.push(`COMMUNITY: ${ctx.community}`);
+    lines.push(`ASSET TYPE: ${ctx.assetType}`);
+  }
   lines.push(`MODEL: ${ctx.modelName} (${result.depth} analysis)`);
   lines.push(`CURRENCY: ${currency}`);
 
@@ -243,10 +295,16 @@ function renderBrief(ctx: NarrativeContext): string {
   if (result.benchmarks.length) {
     lines.push("\n=== BENCHMARK GRADINGS ===");
     for (const b of result.benchmarks) {
+      // Not "target" for a lower-is-better metric: nobody aims for a 50% debt
+      // burden ratio or a 15-year payback, and telling the model they do is how
+      // a write-up ends up congratulating a buyer for approaching a cap.
+      const comfortable =
+        b.direction === "higher"
+          ? `comfortable at or above ${b.good}, floor ${b.warn}`
+          : `comfortable at or below ${b.good}, outer limit ${b.warn}`;
       lines.push(
         `${b.label}: ${formatValue(b.value, undefined, currency)} — graded ${b.status.toUpperCase()} ` +
-          `(target ${b.direction === "higher" ? "at or above" : "at or below"} ${b.good}, ` +
-          `acceptable to ${b.warn})${b.note ? ` — ${b.note}` : ""}`,
+          `(${comfortable})${b.note ? ` — ${b.note}` : ""}`,
       );
     }
   }
@@ -286,7 +344,6 @@ function inferFormat(type: string): string | undefined {
  */
 export function ruleBasedNarrative(ctx: NarrativeContext): Omit<Narrative, "engine"> {
   const { result, currency } = ctx;
-  const v = result.values;
 
   const strengths: NarrativeItem[] = [];
   const redFlags: NarrativeItem[] = [];
@@ -307,18 +364,30 @@ export function ruleBasedNarrative(ctx: NarrativeContext): Omit<Narrative, "engi
   }
 
   for (const b of result.benchmarks) {
+    // Wording follows the benchmark's own direction. "Debt burden ratio above
+    // target" and "Payback below acceptable" both read as praise for the thing
+    // that is actually wrong.
+    const higher = b.direction === "higher";
     if (b.status === "good") {
       strengths.push({
-        title: `${b.label} above target`,
-        detail: `${b.label} of ${formatValue(b.value, undefined, currency)} clears the ${b.good} target${b.note ? `. ${b.note}` : "."}`,
+        title: higher ? `${b.label} above target` : `${b.label} comfortably low`,
+        detail:
+          `${b.label} of ${formatValue(b.value, undefined, currency)} is ` +
+          (higher
+            ? `clear of the ${b.good} target`
+            : `inside the ${b.good} comfortable level`) +
+          `${b.note ? `. ${b.note}` : "."}`,
         metric: b.key,
       });
     } else if (b.status === "bad") {
       redFlags.push({
-        title: `${b.label} below acceptable`,
+        title: higher ? `${b.label} below acceptable` : `${b.label} past the limit`,
         detail:
           `${b.label} of ${formatValue(b.value, undefined, currency)} sits outside the acceptable band ` +
-          `(target ${b.direction === "higher" ? "≥" : "≤"} ${b.good}, tolerance ${b.warn})${b.note ? `. ${b.note}` : "."}`,
+          (higher
+            ? `(comfortable ≥ ${b.good}, floor ${b.warn})`
+            : `(comfortable ≤ ${b.good}, outer limit ${b.warn})`) +
+          `${b.note ? `. ${b.note}` : "."}`,
         metric: b.key,
         severity: "red",
       });
@@ -349,25 +418,9 @@ export function ruleBasedNarrative(ctx: NarrativeContext): Omit<Narrative, "engi
     }
   }
 
-  const grossYield = typeof v.gross_yield === "number" ? v.gross_yield : null;
-  const netYield = typeof v.net_yield === "number" ? v.net_yield : null;
-  const dscr = typeof v.dscr === "number" ? v.dscr : null;
-  const psf = typeof v.price_per_sqft === "number" ? v.price_per_sqft : null;
+  const { headline, opener } = framing(ctx);
 
-  const bits: string[] = [];
-  if (psf !== null) bits.push(`${currency} ${Math.round(psf).toLocaleString("en-AE")}/sqft`);
-  if (grossYield !== null) bits.push(`${(grossYield * 100).toFixed(2)}% gross yield`);
-  if (netYield !== null) bits.push(`${(netYield * 100).toFixed(2)}% net yield`);
-  if (dscr !== null) bits.push(`${dscr.toFixed(2)}x DSCR`);
-
-  const headline = bits.length
-    ? `${ctx.dealName}${ctx.community ? `, ${ctx.community}` : ""} — ${bits.join(", ")}.`
-    : `${ctx.dealName} — underwriting complete.`;
-
-  const summaryParts: string[] = [];
-  summaryParts.push(
-    `Underwritten on the ${ctx.modelName} model at ${result.depth} depth${bits.length ? `, producing ${bits.join(", ")}` : ""}.`,
-  );
+  const summaryParts: string[] = [opener];
   if (redFlags.length) {
     summaryParts.push(
       `${redFlags.length} risk ${redFlags.length === 1 ? "item was" : "items were"} flagged, led by ${redFlags[0].title.toLowerCase()}.`,
@@ -389,6 +442,55 @@ export function ruleBasedNarrative(ctx: NarrativeContext): Omit<Narrative, "engi
     strengths: dedupe(strengths).slice(0, 6),
     redFlags: dedupe(redFlags).slice(0, 8),
     ddItems: dedupe(ddItems).slice(0, 12),
+  };
+}
+
+/**
+ * The first sentence of a write-up, and the one line above it.
+ *
+ * A mortgage run computes no yield, no price per square foot and no DSCR, so
+ * the property framing collapsed to "— underwriting complete", which tells a
+ * broker nothing, on a document headed "investment committee pack", which tells
+ * them something false. The mortgage branch reads the model's OWN nominated
+ * headline figures rather than a second hardcoded list of keys, and states what
+ * the document is: an indication, not a decision.
+ */
+function framing(ctx: NarrativeContext): { headline: string; opener: string } {
+  const { result, currency } = ctx;
+
+  if (isMortgage(ctx)) {
+    const band = result.summary
+      .slice(0, 3)
+      .filter((s) => s.value !== null && s.value !== undefined)
+      .map((s) => `${s.label.toLowerCase()} ${formatValue(s.value, s.format, currency, s.precision)}`);
+    return {
+      headline: band.length
+        ? `${ctx.dealName} — ${band.join(", ")}.`
+        : `${ctx.dealName} — affordability assessed.`,
+      opener:
+        `Affordability assessed on the ${ctx.modelName} model${band.length ? `, giving ${band.join(", ")}` : ""}. ` +
+        "This is an indication for discussion, not a credit decision or an offer of lending.",
+    };
+  }
+
+  const v = result.values;
+  const num = (key: string): number | null => (typeof v[key] === "number" ? (v[key] as number) : null);
+  const psf = num("price_per_sqft");
+  const grossYield = num("gross_yield");
+  const netYield = num("net_yield");
+  const dscr = num("dscr");
+
+  const bits: string[] = [];
+  if (psf !== null) bits.push(`${currency} ${Math.round(psf).toLocaleString("en-AE")}/sqft`);
+  if (grossYield !== null) bits.push(`${(grossYield * 100).toFixed(2)}% gross yield`);
+  if (netYield !== null) bits.push(`${(netYield * 100).toFixed(2)}% net yield`);
+  if (dscr !== null) bits.push(`${dscr.toFixed(2)}x DSCR`);
+
+  return {
+    headline: bits.length
+      ? `${ctx.dealName}${ctx.community ? `, ${ctx.community}` : ""} — ${bits.join(", ")}.`
+      : `${ctx.dealName} — underwriting complete.`,
+    opener: `Underwritten on the ${ctx.modelName} model at ${result.depth} depth${bits.length ? `, producing ${bits.join(", ")}` : ""}.`,
   };
 }
 
