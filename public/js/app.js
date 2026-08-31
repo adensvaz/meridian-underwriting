@@ -1056,18 +1056,47 @@ function collectContext() {
 
 // ---------------------------------------------------------------- documents --
 
-const SLOTS = [
+/**
+ * What to ask for depends on which job this case is.
+ *
+ * Underwriting a property means reading a seller's pack: the memorandum, the
+ * rent roll, the T12. Assessing a buyer for a mortgage means reading a PERSON:
+ * their identity, their income, their bank statements, what they already owe.
+ *
+ * Showing an applicant three slots asking for an Offering Memorandum and a
+ * trailing-twelve-month statement was not a labelling slip — it was asking for
+ * documents that do not exist in that transaction, and it would make a broker
+ * doubt the whole tool.
+ *
+ * The mortgage list is the same one the buyer sees on the collection page
+ * (MORTGAGE_CHECKLIST in src/lib/collect.ts), collapsed to its `kind` groups so
+ * the broker gets five slots rather than nine rows.
+ */
+const PROPERTY_SLOTS = [
   { kind: "om", label: "Offering Memorandum", hint: "PDF or DOCX · the seller's claims" },
   { kind: "rent_roll", label: "Rent Roll", hint: "XLSX or CSV · unit-level rents" },
   { kind: "t12", label: "T12", hint: "XLSX or CSV · trailing twelve months" },
 ];
 
+const MORTGAGE_SLOTS = [
+  { kind: "identity", label: "Identity", hint: "Emirates ID, passport and visa" },
+  { kind: "income", label: "Income", hint: "Salary certificate and payslips, or trade licence and accounts" },
+  { kind: "bank_statement", label: "Bank statements", hint: "Six months, stamped by the bank" },
+  { kind: "liability", label: "Liabilities", hint: "Liability letter and credit card statements · if any" },
+  { kind: "om", label: "Property papers", hint: "MOU or Form F, title deed or Oqood · once there is one" },
+];
+
+function slotsFor(deal) {
+  return deal && deal.assetType === "mortgage" ? MORTGAGE_SLOTS : PROPERTY_SLOTS;
+}
+
 function renderDocuments(panel) {
   const deal = state.detail.deal;
   const documents = state.detail.documents || [];
   const scanned = documents.filter((d) => d.isScanned);
+  const isMortgage = deal && deal.assetType === "mortgage";
 
-  const bank = el("div", { class: "dropbank" }, SLOTS.map((slot) => dropSlot(slot, documents)));
+  const bank = el("div", { class: "dropbank" }, slotsFor(deal).map((slot) => dropSlot(slot, documents)));
 
   const extractButton = button("Run extraction", {
     variant: "primary",
@@ -1087,7 +1116,10 @@ function renderDocuments(panel) {
           class: "flag__body",
           text:
             `${scanned.length} uploaded file${scanned.length === 1 ? " has" : "s have"} no extractable text layer. ` +
-            "Extraction will find little or nothing in it. Ask the seller for the native file, or re-run OCR before relying on any figure taken from it.",
+            "Extraction will find little or nothing in it. " +
+            (isMortgage
+              ? "A photograph of an Emirates ID is fine to keep on file, but any figure from it has to be typed in by hand."
+              : "Ask the seller for the native file, or re-run OCR before relying on any figure taken from it."),
         }),
         el("div", { class: "flag__meta", text: scanned.map((d) => d.filename).join(" · ") }),
       ),
@@ -1103,8 +1135,10 @@ function renderDocuments(panel) {
           class: "flag__body",
           text:
             "This server has no extraction key. Documents are still stored, parsed and paginated, but no figures are " +
-            "pulled out of them automatically. Enter the numbers on the Review tab — the model's own defaults are " +
-            "already in place, and every one of them is editable.",
+            "pulled out of them automatically. " +
+            (isMortgage
+              ? "Type the applicant’s figures in on the Review tab — income, existing repayments and card limits are the three that move the answer."
+              : "Enter the numbers on the Review tab — the model’s own defaults are already in place, and every one of them is editable."),
         }),
       ),
     );
@@ -1112,7 +1146,17 @@ function renderDocuments(panel) {
 
   append(
     panel,
-    el("div", { class: "section" }, sectionHead("Source documents", "Drop a file on a slot, or choose one."), bank),
+    el(
+      "div",
+      { class: "section" },
+      sectionHead(
+        isMortgage ? "The buyer’s documents" : "Source documents",
+        isMortgage
+          ? "Drop a file on a slot, or send the buyer a link from the Collect tab and let them upload."
+          : "Drop a file on a slot, or choose one.",
+      ),
+      bank,
+    ),
     documents.length
       ? el("div", { class: "section" }, sectionHead("Uploaded", `${documents.length} file${documents.length === 1 ? "" : "s"}`), documentList(documents))
       : null,
@@ -1120,7 +1164,12 @@ function renderDocuments(panel) {
     el(
       "div",
       { class: "section no-print" },
-      sectionHead("Extraction", "Reads every document, writes the fields, and reconciles the rent roll against the T12."),
+      sectionHead(
+        "Extraction",
+        isMortgage
+          ? "Reads every document and writes what it finds into the assessment — income from the salary certificate, commitments from the liability letter."
+          : "Reads every document, writes the fields, and reconciles the rent roll against the T12.",
+      ),
       el("div", { class: "row row--12 row--wrap" }, extractButton, extractionHistory()),
     ),
   );
