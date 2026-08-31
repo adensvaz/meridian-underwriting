@@ -83,3 +83,15 @@ assumptions.
       wording across both flows.
 - [ ] **Run a full sweep** per `QA_PROMPT.md` once the above are clear, covering
       every screen in both flows plus the export and the printed pack.
+- [ ] **There is no "not sure yet" for residency.** On a first call a broker
+      often does not know whether the buyer is resident, and the field silently
+      defaults to expat resident — which sets an 80% LTV ceiling that may be
+      badly wrong, presented with no indication it was assumed. Either add an
+      explicit unknown state that suppresses the borrowing figure until it is
+      answered, or mark the result as provisional. Do not simply pick a
+      different default; the problem is that a guess is presented as a fact.
+- [ ] **Residency is asked once and never confirmed against the documents.**
+      The passport and visa the buyer uploads are the evidence. When extraction
+      is configured it should check the stated residency against what the
+      documents show and flag a contradiction, rather than trusting the intake
+      dropdown for the whole life of the case.

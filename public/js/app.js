@@ -508,7 +508,7 @@ function mortgageIntakeForm() {
       { class: "grid grid--tight" },
       fieldCell("col-6", "Assessment name", name, "mi-name"),
       fieldCell("col-6", "Community", community, "mi-community"),
-      fieldCell("col-4", "Applicant", applicant.node, "mi-applicant"),
+      fieldCell("col-4", "Applicant residency", applicant.node, "mi-applicant"),
       fieldCell("col-4", "Employment", employment.node, "mi-employment"),
       fieldCell("col-4", "Property", firstProperty.node, "mi-first"),
       fieldCell("col-3", "Target price (AED)", price, "mi-price"),

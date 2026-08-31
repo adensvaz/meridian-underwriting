@@ -466,10 +466,25 @@ export function recordUpload(requestId: string, count: number): void {
 
 export function listRequests(actor: AuthenticatedUser, dealId: string) {
   if (!getDeal(actor, dealId)) return [];
+
+  // A request freezes its checklist at creation, which is right for the buyer —
+  // a list that changes under them mid-upload would be baffling. But it means a
+  // link sent before the broker corrected the applicant's residency is still
+  // asking a non-resident for an Emirates ID. Detect that and say so, rather
+  // than letting the fixed bug walk back in through a stale link.
+  const current = applicantProfile(dealId);
+  const expected = new Set(
+    resolveChecklist("mortgage", current.employment, undefined, current.residency).map((i) => i.key),
+  );
+
   return all<DocumentRequestRow>(
     "SELECT * FROM document_requests WHERE deal_id = ? ORDER BY created_at DESC",
     dealId,
-  ).map((r) => ({
+  ).map((r) => {
+    const issued = fromJson<string[]>(r.checklist, []);
+    const impossible = issued.filter((k) => !expected.has(k));
+    const missing = [...expected].filter((k) => !issued.includes(k));
+    return {
     id: r.id,
     recipientName: r.recipient_name,
     reference: r.reference,
@@ -479,9 +494,24 @@ export function listRequests(actor: AuthenticatedUser, dealId: string) {
     lastUploadAt: r.last_upload_at,
     expiresAt: r.expires_at,
     createdAt: r.created_at,
+    // Set when the applicant profile changed after this link was sent. The
+    // buyer is being asked for the wrong documents and the broker needs to
+    // re-issue.
+    stale:
+      r.revoked_at || impossible.length + missing.length === 0
+        ? null
+        : {
+            asksForImpossible: impossible.length,
+            missing: missing.length,
+            note:
+              impossible.length > 0
+                ? `This link was sent before the applicant was recorded as ${current.residency.replace("_", " ")}. It asks for ${impossible.length} document${impossible.length === 1 ? "" : "s"} they cannot provide. Revoke it and send a new one.`
+                : `The applicant profile changed after this link was sent, so it is missing ${missing.length} document${missing.length === 1 ? "" : "s"}. Send a new one.`,
+          },
     // The token is deliberately absent. It was shown once at creation and
     // cannot be recovered — the broker re-issues rather than retrieves.
-  }));
+    };
+  });
 }
 
 export function revokeRequest(actor: AuthenticatedUser, dealId: string, requestId: string): boolean {
