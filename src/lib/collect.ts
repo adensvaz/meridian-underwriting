@@ -30,9 +30,22 @@ export interface ChecklistItem {
   /** Maps onto the document `kind` column when the file lands. */
   kind: string;
   required: boolean;
-  /** Only shown when the condition applies, e.g. self-employed applicants. */
-  appliesWhen?: "salaried" | "self_employed" | "always";
+  /**
+   * Who this document applies to. Absent means everyone.
+   *
+   * Two independent axes, because they genuinely are independent: a
+   * self-employed non-resident needs a trade licence AND is unable to produce
+   * an Emirates ID. Collapsing them into one list produced a checklist that
+   * asked a non-resident for a UAE residence visa they cannot hold.
+   */
+  employment?: Employment[];
+  residency?: Residency[];
 }
+
+export type Employment = "salaried" | "self_employed";
+export type Residency = "uae_national" | "expat_resident" | "non_resident";
+
+const RESIDENTS: Residency[] = ["uae_national", "expat_resident"];
 
 /**
  * What a UAE lender actually asks a residential mortgage applicant for. This is
@@ -40,29 +53,51 @@ export interface ChecklistItem {
  * is most of the value — a buyer who is told exactly what to send sends it once.
  */
 export const MORTGAGE_CHECKLIST: ChecklistItem[] = [
+  // ---- identity -------------------------------------------------------
   {
     key: "emirates_id",
     label: "Emirates ID",
     hint: "Both sides. A clear photo is fine.",
     kind: "identity",
     required: true,
-    appliesWhen: "always",
+    // A non-resident does not hold one. Asking anyway is the fastest way to
+    // make a buyer think the form was not meant for them.
+    residency: RESIDENTS,
   },
   {
     key: "passport_visa",
     label: "Passport and residence visa",
-    hint: "The photo page and the visa page. Non-residents: passport only.",
+    hint: "The photo page and the visa page.",
     kind: "identity",
     required: true,
-    appliesWhen: "always",
+    residency: ["expat_resident"],
   },
+  {
+    key: "passport_only",
+    label: "Passport",
+    hint: "The photo page. A UAE visa is not needed.",
+    kind: "identity",
+    required: true,
+    residency: ["uae_national", "non_resident"],
+  },
+  {
+    key: "proof_of_address",
+    label: "Proof of home address",
+    hint: "A utility bill or bank letter from your country of residence, dated within the last three months.",
+    kind: "identity",
+    required: true,
+    residency: ["non_resident"],
+  },
+
+  // ---- income ---------------------------------------------------------
   {
     key: "salary_certificate",
     label: "Salary certificate",
     hint: "Issued by your employer within the last month, addressed to the bank. It must state your basic salary, allowances and joining date.",
     kind: "income",
     required: true,
-    appliesWhen: "salaried",
+    employment: ["salaried"],
+    residency: RESIDENTS,
   },
   {
     key: "payslips",
@@ -70,7 +105,24 @@ export const MORTGAGE_CHECKLIST: ChecklistItem[] = [
     hint: "The three most recent months.",
     kind: "income",
     required: true,
-    appliesWhen: "salaried",
+    employment: ["salaried"],
+  },
+  {
+    key: "employment_contract",
+    label: "Employment contract or employer letter",
+    hint: "Confirming your role, salary and start date. A UAE bank cannot verify an overseas employer the way it can a local one, so this stands in for the salary certificate.",
+    kind: "income",
+    required: true,
+    employment: ["salaried"],
+    residency: ["non_resident"],
+  },
+  {
+    key: "tax_returns",
+    label: "Tax returns — 2 years",
+    hint: "Your personal tax filing from your country of residence, or the equivalent income statement. Not needed if your country does not issue one — tell us if so.",
+    kind: "income",
+    required: true,
+    residency: ["non_resident"],
   },
   {
     key: "trade_licence",
@@ -78,7 +130,17 @@ export const MORTGAGE_CHECKLIST: ChecklistItem[] = [
     hint: "Valid licence plus the memorandum of association.",
     kind: "income",
     required: true,
-    appliesWhen: "self_employed",
+    employment: ["self_employed"],
+    residency: RESIDENTS,
+  },
+  {
+    key: "company_registration",
+    label: "Company registration",
+    hint: "The incorporation certificate and ownership structure for your business, from your country of registration.",
+    kind: "income",
+    required: true,
+    employment: ["self_employed"],
+    residency: ["non_resident"],
   },
   {
     key: "audited_financials",
@@ -86,23 +148,50 @@ export const MORTGAGE_CHECKLIST: ChecklistItem[] = [
     hint: "Audited or accountant-certified accounts for the last two financial years.",
     kind: "income",
     required: true,
-    appliesWhen: "self_employed",
+    employment: ["self_employed"],
   },
+
+  // ---- banking --------------------------------------------------------
   {
     key: "bank_statements",
     label: "Bank statements — 6 months",
     hint: "Six months of personal account statements, stamped by the bank. Self-employed applicants should send the business account too.",
     kind: "bank_statement",
     required: true,
-    appliesWhen: "always",
+    residency: RESIDENTS,
   },
+  {
+    key: "bank_statements_overseas",
+    label: "Bank statements — 6 months",
+    hint: "Six months from your main account, stamped or officially issued by the bank. Statements in a language other than English or Arabic need a certified translation.",
+    kind: "bank_statement",
+    required: true,
+    residency: ["non_resident"],
+  },
+  {
+    key: "source_of_funds",
+    label: "Source of the deposit",
+    hint: "Evidence of where the deposit came from — a savings history, a property sale, a share sale or a documented gift. Every UAE bank asks a non-resident this, and it is the single most common reason a file stalls.",
+    kind: "liability",
+    required: true,
+    residency: ["non_resident"],
+  },
+
+  // ---- existing borrowing --------------------------------------------
   {
     key: "liability_letter",
     label: "Liability letter",
     hint: "From any bank you have a loan or credit card with, showing the outstanding balance and monthly instalment. Only if you have existing borrowing.",
     kind: "liability",
     required: false,
-    appliesWhen: "always",
+  },
+  {
+    key: "credit_report",
+    label: "Credit report",
+    hint: "From your home country credit bureau. UAE banks cannot see an overseas credit history, so most will ask for this.",
+    kind: "liability",
+    required: false,
+    residency: ["non_resident"],
   },
   {
     key: "credit_card_statements",
@@ -110,15 +199,15 @@ export const MORTGAGE_CHECKLIST: ChecklistItem[] = [
     hint: "Latest statement for each card, showing the credit limit. The limit matters even if the balance is zero.",
     kind: "liability",
     required: false,
-    appliesWhen: "always",
   },
+
+  // ---- the property ---------------------------------------------------
   {
     key: "property_mou",
     label: "Property MOU or Form F",
     hint: "The signed sale agreement, once you have one. Not needed for a pre-approval.",
     kind: "om",
     required: false,
-    appliesWhen: "always",
   },
   {
     key: "title_deed",
@@ -126,7 +215,6 @@ export const MORTGAGE_CHECKLIST: ChecklistItem[] = [
     hint: "The seller's title deed, or the Oqood certificate for an off-plan property.",
     kind: "om",
     required: false,
-    appliesWhen: "always",
   },
 ];
 
@@ -138,7 +226,6 @@ export const ACQUISITION_CHECKLIST: ChecklistItem[] = [
     hint: "The marketing pack from the seller or broker.",
     kind: "om",
     required: true,
-    appliesWhen: "always",
   },
   {
     key: "rent_roll",
@@ -146,7 +233,6 @@ export const ACQUISITION_CHECKLIST: ChecklistItem[] = [
     hint: "One row per unit with the annual rent, cheque count and lease dates. Excel is better than PDF.",
     kind: "rent_roll",
     required: true,
-    appliesWhen: "always",
   },
   {
     key: "t12",
@@ -154,7 +240,6 @@ export const ACQUISITION_CHECKLIST: ChecklistItem[] = [
     hint: "Income and expenses for the last twelve months.",
     kind: "t12",
     required: true,
-    appliesWhen: "always",
   },
   {
     key: "service_charge_statement",
@@ -162,7 +247,6 @@ export const ACQUISITION_CHECKLIST: ChecklistItem[] = [
     hint: "The latest Mollak statement or Owners Association invoice, showing the rate per square foot and any arrears.",
     kind: "other",
     required: false,
-    appliesWhen: "always",
   },
   {
     key: "title_deed",
@@ -170,7 +254,6 @@ export const ACQUISITION_CHECKLIST: ChecklistItem[] = [
     hint: "Confirms ownership, area and whether any mortgage is registered against the property.",
     kind: "other",
     required: false,
-    appliesWhen: "always",
   },
 ];
 
@@ -179,21 +262,54 @@ export function checklistFor(kind: "mortgage" | "acquisition"): ChecklistItem[] 
 }
 
 /**
- * Filters a checklist to the items that apply. A salaried applicant should not
- * be asked for a trade licence — every irrelevant row is one more reason for a
- * buyer to give up halfway.
+ * Filters a checklist to the items that actually apply to this applicant.
+ *
+ * Every irrelevant row is one more reason for a buyer to abandon the form, and
+ * an impossible row — an Emirates ID from someone who lives in London — reads
+ * as the tool not knowing who they are.
  */
 export function resolveChecklist(
   kind: "mortgage" | "acquisition",
-  employment: "salaried" | "self_employed" = "salaried",
+  employment: Employment = "salaried",
   keys?: string[],
+  residency: Residency = "expat_resident",
 ): ChecklistItem[] {
   const base = checklistFor(kind).filter(
-    (i) => !i.appliesWhen || i.appliesWhen === "always" || i.appliesWhen === employment,
+    (i) =>
+      (!i.employment || i.employment.includes(employment)) &&
+      (!i.residency || i.residency.includes(residency)),
   );
   if (!keys || !keys.length) return base;
   const wanted = new Set(keys);
   return base.filter((i) => wanted.has(i.key));
+}
+
+/**
+ * Reads the applicant profile off the case rather than asking for it again.
+ * Falls back to the commonest combination when a case has not been filled in
+ * yet, which is a salaried expat resident.
+ */
+export function applicantProfile(dealId: string): {
+  employment: Employment;
+  residency: Residency;
+} {
+  const rows = all<{ field_key: string; ai_value: string | null; user_value: string | null }>(
+    "SELECT field_key, ai_value, user_value FROM extracted_fields WHERE deal_id = ? AND field_key IN ('employment_type','applicant_type')",
+    dealId,
+  );
+  const read = (key: string): string | null => {
+    const row = rows.find((r) => r.field_key === key);
+    return row ? (row.user_value ?? row.ai_value) : null;
+  };
+
+  const employment = read("employment_type") === "self_employed" ? "self_employed" : "salaried";
+  const applicant = read("applicant_type");
+  const residency: Residency =
+    applicant === "non_resident" ? "non_resident"
+    : applicant === "uae_national" ? "uae_national"
+    : "expat_resident";
+
+  return { employment, residency };
 }
 
 // ------------------------------------------------------------------ tokens --
@@ -237,7 +353,8 @@ export function createDocumentRequest(
     reference?: string;
     message?: string;
     kind?: "mortgage" | "acquisition";
-    employment?: "salaried" | "self_employed";
+    employment?: Employment;
+    residency?: Residency;
     items?: string[];
     ttlDays?: number;
     baseUrl?: string;
@@ -246,10 +363,16 @@ export function createDocumentRequest(
   const deal = getDeal(actor, dealId);
   if (!deal) return null;
 
+  // Default both axes from what the case already knows. A broker has already
+  // told us the applicant is a non-resident on the intake form; making them
+  // say it again to get the right checklist is the kind of small stupidity
+  // that makes a tool feel like paperwork.
+  const known = applicantProfile(deal.id);
   const checklist = resolveChecklist(
-    options.kind ?? "mortgage",
-    options.employment ?? "salaried",
+    options.kind ?? (deal.asset_type === "mortgage" ? "mortgage" : "acquisition"),
+    options.employment ?? known.employment,
     options.items,
+    options.residency ?? known.residency,
   );
 
   const token = randomBytes(32).toString("base64url");

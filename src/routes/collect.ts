@@ -48,6 +48,7 @@ export function registerCollectRoutes(router: Router): void {
       message?: string;
       kind?: "mortgage" | "acquisition";
       employment?: "salaried" | "self_employed";
+      residency?: "uae_national" | "expat_resident" | "non_resident";
       items?: string[];
       ttlDays?: number;
     }>(ctx.req);
@@ -57,7 +58,13 @@ export function registerCollectRoutes(router: Router): void {
       reference: body.reference,
       message: body.message,
       kind: body.kind === "acquisition" ? "acquisition" : "mortgage",
-      employment: body.employment === "self_employed" ? "self_employed" : "salaried",
+      // Undefined rather than a default, so createDocumentRequest can fall back
+      // to what the case already knows instead of being overridden by a guess.
+      employment: body.employment === "self_employed" ? "self_employed" : undefined,
+      residency:
+        body.residency === "non_resident" || body.residency === "uae_national"
+          ? body.residency
+          : undefined,
       items: Array.isArray(body.items) ? body.items.slice(0, 40) : undefined,
       ttlDays: typeof body.ttlDays === "number" ? body.ttlDays : undefined,
       baseUrl: baseUrlOf(ctx),
@@ -86,9 +93,21 @@ export function registerCollectRoutes(router: Router): void {
   /** The checklist templates, so the UI does not hard-code them. */
   router.get("/api/collect/checklists", (ctx) => {
     json(ctx.res, 200, {
+      // Every combination, so the UI can preview the exact list a given
+      // applicant will see without a round trip per toggle.
       mortgage: {
-        salaried: resolveChecklist("mortgage", "salaried"),
-        self_employed: resolveChecklist("mortgage", "self_employed"),
+        expat_resident: {
+          salaried: resolveChecklist("mortgage", "salaried", undefined, "expat_resident"),
+          self_employed: resolveChecklist("mortgage", "self_employed", undefined, "expat_resident"),
+        },
+        uae_national: {
+          salaried: resolveChecklist("mortgage", "salaried", undefined, "uae_national"),
+          self_employed: resolveChecklist("mortgage", "self_employed", undefined, "uae_national"),
+        },
+        non_resident: {
+          salaried: resolveChecklist("mortgage", "salaried", undefined, "non_resident"),
+          self_employed: resolveChecklist("mortgage", "self_employed", undefined, "non_resident"),
+        },
       },
       acquisition: resolveChecklist("acquisition"),
     });

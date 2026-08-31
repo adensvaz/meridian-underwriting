@@ -19,7 +19,34 @@ assumptions.
 - [x] **"Ask the seller for the native file"** on a scanned document, when a
       mortgage case has no seller involved in the upload.
 
+- [x] **A non-resident was asked for an Emirates ID and a UAE residence visa** —
+      two documents they cannot hold. The checklist filtered on employment only.
+      It now filters on residency too, and the two axes are independent because
+      a self-employed non-resident needs a trade licence *and* cannot produce an
+      Emirates ID. Non-residents get passport, proof of home address, employment
+      contract or company registration, tax returns, overseas bank statements,
+      source of the deposit and a home-country credit report.
+- [x] **The broker had to restate the applicant profile to get the right
+      checklist.** It now derives from the case's own `applicant_type` and
+      `employment_type`, so the link is correct with no extra input.
+
 ## Open
+
+- [ ] **Joint applicants are not modelled at all.** Two incomes, two sets of
+      identity documents, two liability positions — extremely common in Dubai
+      and currently impossible to express. Decide whether to model a second
+      applicant or to state the limitation on screen; silently assessing only
+      one income is the worst of the three.
+- [ ] **A resident buying off-plan is not asked for the Oqood.** The property
+      slot mentions it, but the checklist item is generic. Off-plan changes the
+      LTV cap to 50%, so the case is already flagged — the document ask should
+      follow.
+- [ ] **Age near the maturity limit.** An applicant at 63 salaried gets a
+      2-year term, a very large payment and a tiny loan. Check the screen does
+      not present that as a normal result without explaining why.
+- [ ] **Income not yet provided.** A case created with only a name should say
+      what it needs, not show a maximum borrowing computed from a default
+      income. Check what the Underwriting tab renders on an empty case.
 
 - [ ] **`Tenure not set` in the deal header on a mortgage case.** Tenure is a
       property-title concept. Suppress the item entirely for a mortgage rather

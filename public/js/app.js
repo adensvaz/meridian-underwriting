@@ -1078,16 +1078,58 @@ const PROPERTY_SLOTS = [
   { kind: "t12", label: "T12", hint: "XLSX or CSV · trailing twelve months" },
 ];
 
-const MORTGAGE_SLOTS = [
-  { kind: "identity", label: "Identity", hint: "Emirates ID, passport and visa" },
-  { kind: "income", label: "Income", hint: "Salary certificate and payslips, or trade licence and accounts" },
-  { kind: "bank_statement", label: "Bank statements", hint: "Six months, stamped by the bank" },
-  { kind: "liability", label: "Liabilities", hint: "Liability letter and credit card statements · if any" },
-  { kind: "om", label: "Property papers", hint: "MOU or Form F, title deed or Oqood · once there is one" },
-];
+// The identity and banking asks differ by where the applicant lives, because a
+// non-resident holds no Emirates ID and no UAE visa, banks overseas, and faces
+// heavier source-of-funds scrutiny. Naming documents they cannot produce reads
+// as the tool not knowing who they are.
+function mortgageSlots(residency) {
+  const nonResident = residency === "non_resident";
+  return [
+    {
+      kind: "identity",
+      label: "Identity",
+      hint: nonResident
+        ? "Passport and proof of your home address"
+        : residency === "uae_national"
+          ? "Emirates ID and passport"
+          : "Emirates ID, passport and visa",
+    },
+    {
+      kind: "income",
+      label: "Income",
+      hint: nonResident
+        ? "Employment contract or company papers, plus two years of tax returns"
+        : "Salary certificate and payslips, or trade licence and accounts",
+    },
+    {
+      kind: "bank_statement",
+      label: "Bank statements",
+      hint: nonResident
+        ? "Six months from your main account, officially issued"
+        : "Six months, stamped by the bank",
+    },
+    {
+      kind: "liability",
+      label: nonResident ? "Funds and liabilities" : "Liabilities",
+      hint: nonResident
+        ? "Where the deposit came from, plus any loans or cards"
+        : "Liability letter and credit card statements · if any",
+    },
+    { kind: "om", label: "Property papers", hint: "MOU or Form F, title deed or Oqood · once there is one" },
+  ];
+}
+
+/** Reads the applicant profile off the case rather than asking again. */
+function applicantResidency() {
+  const fields = (state.detail && state.detail.fields) || [];
+  const row = fields.find((f) => f.key === "applicant_type");
+  const value = row ? (row.userValue ?? row.aiValue) : null;
+  return value === "non_resident" || value === "uae_national" ? value : "expat_resident";
+}
 
 function slotsFor(deal) {
-  return deal && deal.assetType === "mortgage" ? MORTGAGE_SLOTS : PROPERTY_SLOTS;
+  if (!deal || deal.assetType !== "mortgage") return PROPERTY_SLOTS;
+  return mortgageSlots(applicantResidency());
 }
 
 function renderDocuments(panel) {
