@@ -25,6 +25,7 @@ import {
 } from "./format.js";
 import {
   append,
+  attachThousands,
   button,
   clear,
   dpair,
@@ -394,12 +395,23 @@ function mortgageIntakeForm() {
     ["no", "Second or subsequent"],
   ]);
 
-  const numeric = (id, placeholder) =>
-    el("input", { class: "input input--num", id, type: "text", inputmode: "decimal", placeholder });
+  // `grouped` is off for age: a two-digit number never needs a separator, and
+  // watching "36" turn into "3,6" mid-keystroke would be alarming.
+  const numeric = (id, placeholder, { grouped = true } = {}) => {
+    const input = el("input", {
+      class: "input input--num",
+      id,
+      type: "text",
+      inputmode: "decimal",
+      autocomplete: "off",
+      placeholder,
+    });
+    return grouped ? attachThousands(input) : input;
+  };
 
   const price = numeric("mi-price", "2,750,000");
   const income = numeric("mi-income", "52,000");
-  const age = numeric("mi-age", "41");
+  const age = numeric("mi-age", "41", { grouped: false });
   const cash = numeric("mi-cash", "800,000");
 
   const errorLine = el("p", { class: "f__error", hidden: true, role: "alert" });

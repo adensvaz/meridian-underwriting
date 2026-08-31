@@ -469,3 +469,69 @@ export function notice(message, tone = "neu") {
 export function ruleDraw() {
   return el("div", { class: "rule rule--draw" });
 }
+
+/**
+ * Live thousands separators in a numeric text input.
+ *
+ * "100000" is genuinely hard to read — a broker typing a price has to count
+ * digits to check they got the right number of zeros. "100,000" does not.
+ *
+ * The hard part is the caret. Reformatting on every keystroke rewrites
+ * `value`, which parks the cursor at the end, so a correction typed into the
+ * middle of a number lands somewhere else. This counts the DIGITS before the
+ * caret, reformats, then restores the caret after that same number of digits —
+ * separators move around the cursor rather than shoving it.
+ *
+ * Shorthand is preserved: a value ending in `m` or `k` is left alone, because
+ * "2.75m" is a complete thought and "2.75,m" is not.
+ */
+export function attachThousands(input) {
+  const group = (raw) => {
+    // Keep digits, at most one decimal point, and a single trailing m/k.
+    const suffix = /[mk]$/i.test(raw) ? raw.slice(-1) : "";
+    let body = (suffix ? raw.slice(0, -1) : raw).replace(/[^\d.]/g, "");
+
+    const firstDot = body.indexOf(".");
+    if (firstDot !== -1) {
+      body = body.slice(0, firstDot + 1) + body.slice(firstDot + 1).replace(/\./g, "");
+    }
+    if (!body) return suffix ? suffix : "";
+
+    // Shorthand is a complete thought — do not group "2.75m" into "2.75,m".
+    if (suffix) return body + suffix;
+
+    const [whole, fraction] = body.split(".");
+    const grouped = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    return fraction === undefined ? grouped : `${grouped}.${fraction}`;
+  };
+
+  const reformat = () => {
+    const before = input.value;
+    const caret = input.selectionStart ?? before.length;
+    const digitsBefore = before.slice(0, caret).replace(/[^\d.]/g, "").length;
+
+    const after = group(before);
+    if (after === before) return;
+    input.value = after;
+
+    // Walk forward until we have passed the same count of value characters.
+    let seen = 0;
+    let position = after.length;
+    for (let i = 0; i < after.length; i++) {
+      if (/[\d.]/.test(after[i])) seen++;
+      if (seen >= digitsBefore) {
+        position = i + 1;
+        break;
+      }
+    }
+    if (digitsBefore === 0) position = 0;
+    input.setSelectionRange(position, position);
+  };
+
+  input.addEventListener("input", reformat);
+  // Paste lands before the input event in some browsers; normalise afterwards.
+  input.addEventListener("paste", () => queueMicrotask(reformat));
+  input.addEventListener("blur", reformat);
+  if (input.value) reformat();
+  return input;
+}
